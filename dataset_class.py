@@ -18,12 +18,12 @@ class FoodRecipeDataset(Dataset):
         return len(self.img_text)
 
     def __getitem__(self, idx):
-        img_path = os.path.join(self.img_dir, self.img_text.iloc[idx, 4] + ".jpg")
+        img_path = str(os.path.join(self.img_dir, self.img_text.iloc[idx, 3]) + ".jpg")
         image = Image.open(img_path)
-        title = self.img_text.iloc[idx, 1]
-        ingredients = self.img_text.iloc[idx, 2]
-        instructions = self.img_text.iloc[idx, 3]
-        cleaned_ingredients = self.img_text.iloc[idx, 5]
+        title = str(self.img_text.iloc[idx, 0])
+        ingredients = str(self.img_text.iloc[idx, 1])
+        instructions = str(self.img_text.iloc[idx, 2])
+        cleaned_ingredients = str(self.img_text.iloc[idx, 4])
 
 
 
@@ -38,3 +38,4 @@ class FoodRecipeDataset(Dataset):
 
 
         return image, title, ingredients, instructions, cleaned_ingredients
+
