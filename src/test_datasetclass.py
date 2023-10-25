@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 
 current_working_directory = os.getcwd()
 images_path = os.path.join(current_working_directory, "dataset/Food Images")
-text_path = os.path.join(current_working_directory, "dataset/Food Ingredients and Recipe Dataset with Image Name Mapping.csv")
+text_path = os.path.join(current_working_directory, "dataset/food.csv")
 
 FoodRecipeData = FoodRecipeDataset(text_path, images_path, transforms.ToTensor())
 
