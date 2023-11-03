@@ -13,7 +13,7 @@ from torch.utils.data import DataLoader, random_split
 import matplotlib.pyplot as plt
 from einops import rearrange
 import sys
-sys.path.append("../..")
+sys.path.append("../Food-recipe-transformers/src/")
 from utils.loss import TripletLoss
 
 from dataset_class import FoodRecipeDataset
@@ -33,8 +33,8 @@ def set_seed(seed=1):
 def prepare_dataloaders(batch_size):
     
     current_working_directory = os.getcwd()
-    images_path = os.path.join(current_working_directory, "dataset/Food Images")
-    text_path = os.path.join(current_working_directory, "dataset/food.csv")
+    images_path = os.path.join(current_working_directory, "src/dataset/Food Images")
+    text_path = os.path.join(current_working_directory, "src/dataset/food.csv")
 
     FoodRecipeData = FoodRecipeDataset(text_path, images_path, transforms.ToTensor())
 
