@@ -117,22 +117,41 @@ class PositionalEncoding(nn.Module):
         return x + self.pe[:, :seq_length]
         #return self.dropout(x)
 
+class PositionalEmbedding(nn.Module):
+    def __init__(self, embed_dim, max_seq_len=512):
+
+        super(PositionalEmbedding, self).__init__()
+        # Your implemntation
+        ####################### insert code here ####################### 
+        self.positional_embedding = nn.Embedding(max_seq_len, embed_dim)
+        ################################################################
+
+    def forward(self, x):
+        batch_size, seq_length, embed_dim = x.size()
+        # Your implemntation
+        ####################### insert code here ####################### 
+        x = x + self.positional_embedding(torch.arange(seq_length).to(x.device))
+        return x
+        ################################################################
 
 class TextEncoder(nn.Module):
     def __init__(self, embed_dim, num_heads, num_layers, max_seq_len, dropout=0.0, 
-                fc_dim=None, num_tokens=50_000, num_classes=2, pool='cls', pos_enc='fixed'
+                fc_dim=None, num_tokens=50_000, num_classes=2, pool='mean', pos_enc='learnable'
     ):
         super().__init__()
 
-        assert pool in ['cls', 'mean', 'max']
+        assert pool in ['mean', 'max']
         assert pos_enc in ['fixed', 'learnable']
         
         self.pool, self.pos_enc, = pool, pos_enc
 
-        self.token_embedding = nn.Embedding(num_tokens, embed_dim)
+
         self.token_embedding = nn.Embedding(embedding_dim=embed_dim, num_embeddings=num_tokens)
         
-        self.positional_encoding = PositionalEncoding(embed_dim=embed_dim, max_seq_len=max_seq_len)
+        if self.pos_enc == 'learnable':
+            self.positional_encoding = PositionalEmbedding(embed_dim=embed_dim, max_seq_len=max_seq_len)
+        elif self.pos_enc == 'fixed':
+            self.positional_encoding = PositionalEncoding(embed_dim=embed_dim, max_seq_len=max_seq_len)
 
         transformer_blocks = []
         for _ in range(num_layers):
@@ -147,23 +166,28 @@ class TextEncoder(nn.Module):
         tokens = self.token_embedding(x)
         batch_size, seq_length, embed_dim = tokens.size()
 
-        x = self.positional_encoding(tokens)
-        x = self.dropout(x)
+        # positional encoding
+        # learnable: torch.Size([32, 12, 128])
+
+
+        if self.pos_enc == 'fixed':
+            x = self.positional_encoding(tokens) # torch.Size([32, 9, 128])
+        elif self.pos_enc == 'learnable':
+            x = tokens + self.positional_encoding.to(tokens.device, dtype=tokens.dtype)
+        x = self.dropout(x) 
         x = self.transformer_blocks(x)
 
         if self.pool =='max':
             x = x.max(dim=1)[0]
         elif self.pool =='mean':
             x = x.mean(dim=1)
-        elif self.pool == 'cls':
-            x = x[:, 0]
         
         return x
  
 if __name__ == '__main__':
-    title_encoder = TextEncoder(embed_dim=128, num_heads=4, num_layers=4, max_seq_len=512, dropout=0.0, fc_dim=None, num_tokens=50_000, num_classes=2)
-    ingredients_encoder = TextEncoder(embed_dim=128, num_heads=4, num_layers=4, max_seq_len=512, dropout=0.0, fc_dim=None, num_tokens=50_000, num_classes=2)
-    instructions_encoder = TextEncoder(embed_dim=128, num_heads=4, num_layers=4, max_seq_len=512, dropout=0.0, fc_dim=None, num_tokens=50_000, num_classes=2)
+    title_encoder = TextEncoder(embed_dim=128, num_heads=4, num_layers=4, max_seq_len=512, dropout=0.0, fc_dim=None, num_tokens=50_000, num_classes=2, pool='mean', pos_enc='learnable')
+    ingredients_encoder = TextEncoder(embed_dim=128, num_heads=4, num_layers=4, max_seq_len=512, dropout=0.0, fc_dim=None, num_tokens=50_000, num_classes=2, pool='mean', pos_enc='learnable')
+    instructions_encoder = TextEncoder(embed_dim=128, num_heads=4, num_layers=4, max_seq_len=512, dropout=0.0, fc_dim=None, num_tokens=50_000, num_classes=2, pool='mean', pos_enc='learnable')
 
     current_working_directory = os.getcwd()
     images_path = os.path.join(current_working_directory, "src/dataset/Food Images")

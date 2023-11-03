@@ -92,7 +92,7 @@ class EncoderBlock(nn.Module):
 
 class ImageEncoder(nn.Module):
     def __init__(self, image_size, channels, patch_size, embed_dim, num_heads, num_layers,
-                 pos_enc='fixed', pool='cls', dropout=0.0, 
+                 pos_enc='learnable', pool='cls', dropout=0.0, 
                  fc_dim=None, num_classes=2, ):
         
         super().__init__()
@@ -159,6 +159,9 @@ class ImageEncoder(nn.Module):
             tokens = torch.cat([cls_tokens, tokens], dim=1)
             num_patches+=1
         
+        # fixed: # torch.Size([32, 9, 128])
+        # learnable: # torch.Size([1, 65, 128])
+
         positions =  self.positional_embedding.to(img.device, dtype=img.dtype)
         if self.pos_enc == 'fixed' and self.pool=='cls':
             positions = torch.cat([torch.zeros(1, embed_dim).to(img.device), positions], dim=0)
@@ -188,7 +191,7 @@ if __name__ == '__main__':
     pos_enc = 'learnable'
     pool = 'cls'
 
-    encoder = ImageEncoder(image_size=image_size, channels=channels, patch_size=patch_size, embed_dim=128, num_heads=4, num_layers=4, pos_enc='learnable')
+    encoder = ImageEncoder(image_size=image_size, channels=channels, patch_size=patch_size, embed_dim=128, num_heads=4, num_layers=4, pos_enc='learnable', pool='cls')
 
     current_working_directory = os.getcwd()
     images_path = os.path.join(current_working_directory, "src/dataset/Food Images")
