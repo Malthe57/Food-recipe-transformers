@@ -173,7 +173,7 @@ class TextEncoder(nn.Module):
         if self.pos_enc == 'fixed':
             x = self.positional_encoding(tokens) # torch.Size([32, 9, 128])
         elif self.pos_enc == 'learnable':
-            x = tokens + self.positional_encoding.to(tokens.device, dtype=tokens.dtype)
+            x = tokens + self.positional_encoding.to(tokens.device, dtype=tokens.dtype)(tokens)
         x = self.dropout(x) 
         x = self.transformer_blocks(x)
 

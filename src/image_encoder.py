@@ -222,4 +222,4 @@ if __name__ == '__main__':
 
         print("Image transformer output shape:", output.shape)
 
-        break
+        # break
