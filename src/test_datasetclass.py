@@ -7,8 +7,8 @@ from torchvision import transforms
 import matplotlib.pyplot as plt
 
 current_working_directory = os.getcwd()
-images_path = os.path.join(current_working_directory, "dataset/Food Images")
-text_path = os.path.join(current_working_directory, "dataset/food.csv")
+images_path = os.path.join(current_working_directory, "src/dataset/Food Images")
+text_path = os.path.join(current_working_directory, "src/dataset/food.csv")
 
 FoodRecipeData = FoodRecipeDataset(text_path, images_path, transforms.ToTensor())
 
@@ -22,6 +22,12 @@ training_data, test_data = random_split(FoodRecipeData, [training_size, test_siz
 train_dataloader = DataLoader(training_data, batch_size=32, shuffle=True)
 test_dataloader = DataLoader(test_data, batch_size=32, shuffle=True)
 
-image, title, ingredients, instructions, cleaned_ingredients = next(iter(train_dataloader))
-plt.imshow(image[0].permute(1,2,0))
-plt.show()
+# image, title, ingredients, instructions, cleaned_ingredients = next(iter(train_dataloader))
+# plt.imshow(image[0].permute(1,2,0))
+# plt.show()
+
+try:
+    for image, title, ingredients, instructions, cleaned_ingredients in train_dataloader:
+        print(image.shape)
+
+   

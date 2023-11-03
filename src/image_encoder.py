@@ -4,6 +4,11 @@ from torch import nn
 from einops import rearrange, repeat
 from einops.layers.torch import Rearrange
 import torch.nn.functional as F
+from VocabImagedataset_class import VocabImageDataset, pad_input, collate_batch
+from torchvision import transforms
+from torch.utils.data import DataLoader, random_split
+import os
+from torchtext.data.utils import get_tokenizer
 
 def positional_encoding_2d(nph, npw, dim, temperature=10000, dtype=torch.float32):
     y, x = torch.meshgrid(torch.arange(nph), torch.arange(npw), indexing="ij")
@@ -171,37 +176,11 @@ class ImageEncoder(nn.Module):
 
         return x
     
-    def forward_attention(self, img):
-
-        tokens = self.to_patch_embedding(img)
-        batch_size, num_patches, embed_dim = tokens.size()
-        
-        if self.pool == 'cls':
-            cls_tokens = repeat(self.cls_token, '1 1 e -> b 1 e', b=batch_size)
-            tokens = torch.cat([cls_tokens, tokens], dim=1)
-            num_patches+=1
-        
-        positions =  self.positional_embedding.to(img.device, dtype=img.dtype)
-        if self.pos_enc == 'fixed' and self.pool=='cls':
-            positions = torch.cat([torch.zeros(1, embed_dim).to(img.device), positions], dim=0)
-        x = tokens + positions
-        
-        x = self.dropout(x)
-        x = self.transformer_blocks(x)
-        
-        if self.pool =='max':
-            x = x.max(dim=1)[0]
-        elif self.pool =='mean':
-            x = x.mean(dim=1)
-        elif self.pool == 'cls':
-            x = x[:, 0]
-
-        return x
     
 if __name__ == '__main__':
     print('Testing ImageEncoder')
-    image_size = (32,32)
-    patch_size = (4,4)
+    image_size = (64, 64)
+    patch_size = (8,8)
     channels = 3
     embed_dim = 128
     num_heads = 4
@@ -210,8 +189,34 @@ if __name__ == '__main__':
     pool = 'cls'
 
     encoder = ImageEncoder(image_size=image_size, channels=channels, patch_size=patch_size, embed_dim=128, num_heads=4, num_layers=4, pos_enc='learnable')
-    image = torch.randn(1, channels, image_size[0], image_size[1])
-    out = encoder(image)
 
-    print(out)
-    print(out.shape)
+    current_working_directory = os.getcwd()
+    images_path = os.path.join(current_working_directory, "src/dataset/Food Images")
+    text_path = os.path.join(current_working_directory, "src/dataset/food.csv")
+    vocab = torch.load("src/dataset/vocab.pt")
+    tokenizer = get_tokenizer('basic_english')
+
+    image_transform = transforms.Compose([
+    transforms.Resize(image_size),  
+    transforms.ToTensor()])
+
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+    VocabImage = VocabImageDataset(annotations_file=text_path, img_dir=images_path, vocab=vocab, tokenizer=tokenizer, device=device, transform=image_transform)
+    training_share = 0.8 #Proportion of data that is alotted to the training set
+    training_size = int(training_share*len(VocabImage))
+    test_size = len(VocabImage) - training_size
+    generator = torch.Generator().manual_seed(42)
+    train_data, temp = random_split(VocabImage, [training_size, test_size], generator)
+    test_data, val_data = random_split(temp, [int(0.4*len(temp)), int(0.6*len(temp))], generator)
+    
+    train_dataloader = DataLoader(train_data, batch_size=32, shuffle=True, collate_fn=collate_batch)
+
+    encoder.to(device=device)
+
+    for image, title, ingredients, instructions, cleaned_ingredients in train_dataloader:
+        output = encoder(image)
+
+        print("Image transformer output shape:", output.shape)
+
+        break
