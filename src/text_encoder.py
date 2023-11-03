@@ -136,7 +136,7 @@ class PositionalEmbedding(nn.Module):
 
 class TextEncoder(nn.Module):
     def __init__(self, embed_dim, num_heads, num_layers, max_seq_len, dropout=0.0, 
-                fc_dim=None, num_tokens=50_000, num_classes=2, pool='mean', pos_enc='learnable'
+                fc_dim=None, num_tokens=50_000, pool='mean', pos_enc='learnable'
     ):
         super().__init__()
 
@@ -185,9 +185,9 @@ class TextEncoder(nn.Module):
         return x
  
 if __name__ == '__main__':
-    title_encoder = TextEncoder(embed_dim=128, num_heads=4, num_layers=4, max_seq_len=512, dropout=0.0, fc_dim=None, num_tokens=50_000, num_classes=2, pool='mean', pos_enc='learnable')
-    ingredients_encoder = TextEncoder(embed_dim=128, num_heads=4, num_layers=4, max_seq_len=512, dropout=0.0, fc_dim=None, num_tokens=50_000, num_classes=2, pool='mean', pos_enc='learnable')
-    instructions_encoder = TextEncoder(embed_dim=128, num_heads=4, num_layers=4, max_seq_len=512, dropout=0.0, fc_dim=None, num_tokens=50_000, num_classes=2, pool='mean', pos_enc='learnable')
+    title_encoder = TextEncoder(embed_dim=128, num_heads=4, num_layers=4, max_seq_len=512, dropout=0.0, fc_dim=None, num_tokens=50_000, pool='mean', pos_enc='learnable')
+    ingredients_encoder = TextEncoder(embed_dim=128, num_heads=4, num_layers=4, max_seq_len=512, dropout=0.0, fc_dim=None, num_tokens=50_000, pool='mean', pos_enc='learnable')
+    instructions_encoder = TextEncoder(embed_dim=128, num_heads=4, num_layers=4, max_seq_len=512, dropout=0.0, fc_dim=None, num_tokens=50_000, pool='mean', pos_enc='learnable')
 
     current_working_directory = os.getcwd()
     images_path = os.path.join(current_working_directory, "src/dataset/Food Images")
