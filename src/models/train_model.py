@@ -12,11 +12,12 @@ import torchvision.transforms as transforms
 from torch.utils.data import DataLoader, random_split
 import matplotlib.pyplot as plt
 from einops import rearrange
+from torchtext.data.utils import get_tokenizer
 import sys
 sys.path.append("../Food-recipe-transformers/src/")
 from utils.loss import TripletLoss
 
-from dataset_class import FoodRecipeDataset
+from VocabImagedataset_class import VocabImageDataset
 from image_encoder import ImageEncoder
 from text_encoder import TextEncoder
 from joint_encoder import JointEmbedding
@@ -35,15 +36,18 @@ def prepare_dataloaders(batch_size):
     current_working_directory = os.getcwd()
     images_path = os.path.join(current_working_directory, "src/dataset/Food Images")
     text_path = os.path.join(current_working_directory, "src/dataset/food.csv")
+    vocab = torch.load("src/dataset/vocab.pt")
+    tokenizer = get_tokenizer("basic_english")
+    transform = transforms.Compose([transforms.Resize((64,64)),transforms.ToTensor()])
 
-    FoodRecipeData = FoodRecipeDataset(text_path, images_path, transforms.ToTensor())
+    VocabImageData = VocabImageDataset(text_path, images_path, vocab, tokenizer, transform)
 
 
     training_share = 0.6 #Proportion of data that is alotted to the training set
-    training_size = int(training_share*len(FoodRecipeData))
-    test_size = len(FoodRecipeData) - training_size
+    training_size = int(training_share*len(VocabImageData))
+    test_size = len(VocabImageData) - training_size
     generator = torch.Generator().manual_seed(42)
-    training_data, test_data = random_split(FoodRecipeData, [training_size, test_size], generator)
+    training_data, test_data = random_split(VocabImageData, [training_size, test_size], generator)
 
     trainloader = DataLoader(training_data, batch_size=batch_size, shuffle=True)
     testloader = DataLoader(test_data, batch_size=batch_size, shuffle=True)
