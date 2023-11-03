@@ -29,5 +29,6 @@ test_dataloader = DataLoader(test_data, batch_size=32, shuffle=True)
 try:
     for image, title, ingredients, instructions, cleaned_ingredients in train_dataloader:
         print(image.shape)
-
+except:
+    print('time to die')
    

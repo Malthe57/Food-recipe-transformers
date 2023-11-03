@@ -2,3 +2,5 @@
 *.xml
 *.npz
 dataset/
+*.pyc
+src/__pycache__/dataset_class.cpython-310.pyc
