@@ -10,6 +10,7 @@ import torch
 import torchvision
 import torchvision.transforms as transforms
 from torch.utils.data import DataLoader, random_split
+from torch.utils.tensorboard import SummaryWriter
 import matplotlib.pyplot as plt
 from einops import rearrange
 from torchtext.data.utils import get_tokenizer
@@ -59,9 +60,11 @@ def main(image_size=(64,64), patch_size=(8,8), channels=3,
          embed_dim=128, num_heads=4, num_layers=4, num_classes=2,
          pos_enc='learnable', pool='cls', dropout=0.3, fc_dim=None, 
          num_epochs=20, batch_size=16, lr=1e-4, warmup_steps=625,
-         weight_decay=1e-3, gradient_clipping=1
+         weight_decay=1e-3, gradient_clipping=1, model_name = "best_model_ever.pt"
          
     ):
+
+    writer = SummaryWriter()
 
     loss_function = TripletLoss()
 
@@ -100,6 +103,8 @@ def main(image_size=(64,64), patch_size=(8,8), channels=3,
 
             batch_loss.append(loss.item())
 
+            writer.add_scalar("Train/Loss", loss, e)
+
             loss.backward()
             # if the total gradient vector has a length > 1, we clip it back down to 1.
             if gradient_clipping > 0.0:
@@ -109,17 +114,20 @@ def main(image_size=(64,64), patch_size=(8,8), channels=3,
 
         print(f'-- {"train"} loss {np.mean(batch_loss):.3}')
 
-        # with torch.no_grad():
-        #     model.eval()
-        #     tot, cor= 0.0, 0.0
-        #     for image, title, instructions, cleaned_ingredients in test_iter:
-        #         if torch.cuda.is_available():
-        #             image, title, ingredients, instructions, cleaned_ingredients = image.to('cuda'), title.to('cuda'), ingredients.to('cuda'), instructions.to('cuda'), cleaned_ingredients.to('cuda')
-        #         image_features, text_features = model(image, title, ingredients, instructions).argmax(dim=1)
-        #         tot += float(image.size(0))
-        #         cor += float((label == out).sum().item())
-        #     acc = cor / tot
-        #     print(f'-- {"validation"} accuracy {acc:.3}')
+        with torch.no_grad():
+            best_val_loss = np.inf
+            model.eval()
+            tot, cor= 0.0, 0.0
+            for image, title, instructions, cleaned_ingredients in test_iter:
+                if torch.cuda.is_available():
+                    image, title, ingredients, instructions, cleaned_ingredients = image.to('cuda'), title.to('cuda'), ingredients.to('cuda'), instructions.to('cuda'), cleaned_ingredients.to('cuda')
+                image_features, text_features = model(image, title, ingredients, instructions).argmax(dim=1)
+                val_loss = loss_function(image_features, text_features)
+                writer.add_scalar("Val/Loss", val_loss, e)
+                if val_loss < best_val_loss:   
+                    torch.save(model, model_name)
+        
+
     return model
 
 if __name__ == "__main__":
@@ -127,5 +135,4 @@ if __name__ == "__main__":
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')  
     print(f"Model will run on {device}")
     set_seed(seed=1)
-    model = main(image_size=(64, 64), patch_size=(8,8))
-    torch.save(model, 'first_test_model.pt')
+    model = main(image_size=(64, 64), patch_size=(8,8), model_name = "first_test_model")
