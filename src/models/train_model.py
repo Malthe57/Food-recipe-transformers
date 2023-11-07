@@ -60,7 +60,7 @@ def main(image_size=(64,64), patch_size=(8,8), channels=3,
          embed_dim=128, num_heads=4, num_layers=4, num_classes=2,
          pos_enc='learnable', pool='cls', dropout=0.3, fc_dim=None, 
          num_epochs=20, batch_size=16, lr=1e-4, warmup_steps=625,
-         weight_decay=1e-3, gradient_clipping=1, model_name = "best_model_ever.pt"
+         weight_decay=1e-3, gradient_clipping=1, model_name = "../../models/best_model_ever.pt"
          
     ):
 
@@ -91,7 +91,7 @@ def main(image_size=(64,64), patch_size=(8,8), channels=3,
     for e in range(num_epochs):
         print(f'\n epoch {e}')
 
-        batch_loss = []
+        train_losses = []
 
         model.train()
         for image, title, ingredients, instructions, cleaned_ingredients in tqdm.tqdm(train_iter):
@@ -101,7 +101,7 @@ def main(image_size=(64,64), patch_size=(8,8), channels=3,
             image_features, text_features = model(image, title, ingredients, instructions)
             loss = loss_function(image_features, text_features)
 
-            batch_loss.append(loss.item())
+            train_losses.append(loss.item())
 
             writer.add_scalar("Train/Loss", loss, e)
 
@@ -112,20 +112,28 @@ def main(image_size=(64,64), patch_size=(8,8), channels=3,
             opt.step()
             sch.step()
 
-        print(f'-- {"train"} loss {np.mean(batch_loss):.3}')
+        print(f'-- {"train"} loss {np.mean(train_losses):.3}')
 
         with torch.no_grad():
             best_val_loss = np.inf
+
+            val_losses = []
+
             model.eval()
             tot, cor= 0.0, 0.0
-            for image, title, instructions, cleaned_ingredients in test_iter:
+            for image, title, ingredients, instructions, cleaned_ingredients in test_iter:
                 if torch.cuda.is_available():
                     image, title, ingredients, instructions, cleaned_ingredients = image.to('cuda'), title.to('cuda'), ingredients.to('cuda'), instructions.to('cuda'), cleaned_ingredients.to('cuda')
-                image_features, text_features = model(image, title, ingredients, instructions).argmax(dim=1)
+                image_features, text_features = model(image, title, ingredients, instructions)
                 val_loss = loss_function(image_features, text_features)
                 writer.add_scalar("Val/Loss", val_loss, e)
-                if val_loss < best_val_loss:   
-                    torch.save(model, model_name)
+
+                val_losses.append(val_loss.item())
+
+            if np.mean(val_losses) < best_val_loss:   
+                torch.save(model, model_name)
+                best_val_loss = val_loss
+                print("Saving model!")
         
 
     return model
@@ -135,4 +143,6 @@ if __name__ == "__main__":
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')  
     print(f"Model will run on {device}")
     set_seed(seed=1)
-    model = main(image_size=(64, 64), patch_size=(8,8), model_name = "first_test_model")
+
+    model_path = "models/best_model_ever.pt"
+    model = main(image_size=(64, 64), patch_size=(8,8), model_name=model_path)
