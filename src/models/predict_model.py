@@ -7,7 +7,7 @@ import torch.nn.functional as F
 import tqdm
 
 import torch
-import torchvision
+import pickle
 import torchvision.transforms as transforms
 from torch.utils.data import DataLoader, random_split
 from torch.utils.tensorboard import SummaryWriter
@@ -45,27 +45,37 @@ def prepare_dataloaders(batch_size):
     VocabImageData = VocabImageDataset(annotations_file=text_path, img_dir=images_path, vocab=vocab, tokenizer=tokenizer, device=device, transform=transform)
 
 
-    training_share = 0.6 #Proportion of data that is alotted to the training set
+    training_share = 0.8 #Proportion of data that is alotted to the training set
     training_size = int(training_share*len(VocabImageData))
     test_size = len(VocabImageData) - training_size
     generator = torch.Generator().manual_seed(42)
-    training_data, test_data = random_split(VocabImageData, [training_size, test_size], generator)
+    training_data, temp = random_split(VocabImageData, [training_size, test_size], generator)
+    test_data, val_data = random_split(temp, [int(0.4*len(temp)), int(0.6*len(temp))], generator)
 
     trainloader = DataLoader(training_data, batch_size=batch_size, shuffle=True, collate_fn=collate_batch)
+    valloader = DataLoader(val_data, batch_size=batch_size, shuffle=True, collate_fn=collate_batch)
     testloader = DataLoader(test_data, batch_size=batch_size, shuffle=True, collate_fn=collate_batch)
 
-    return trainloader, testloader, training_data, test_data
+
+    return trainloader, valloader, testloader, training_data, val_data, test_data
+
+def dump_pickles(features1, features2):
+    with open("models/test_img_features.pkl", 'wb') as f:
+        pickle.dump(features1, f)
+    with open("models/test_text_features.pkl", 'wb') as f:
+        pickle.dump(features2, f)
+
 
 # def inference(model):
 
 model = torch.load("models/best_model_ever.pt")
 model.eval()
 
-trainloader, testloader, _, _ = prepare_dataloaders(batch_size=32)
+trainloader, valloader, testloader, _, _, _ = prepare_dataloaders(batch_size=1)
 
 
-all_img_features = []
-all_text_features = []
+test_img_features = []
+test_text_features = []
 
 for image, title, ingredients, instructions, cleaned_ingredients in tqdm.tqdm(testloader):
     if torch.cuda.is_available():
@@ -73,7 +83,7 @@ for image, title, ingredients, instructions, cleaned_ingredients in tqdm.tqdm(te
 
     image_features, text_features = model(image, title, ingredients, instructions)
 
-    all_img_features.append(image_features.detach().cpu().numpy())
-    all_text_features.append(text_features.detach().cpu().numpy())
+    test_img_features.append(image_features.detach().cpu().numpy()[0])
+    test_text_features.append(text_features.detach().cpu().numpy()[0])
 
-    print("hej")
+dump_pickles(features1=np.asarray(test_img_features), features2=np.asarray(test_text_features))

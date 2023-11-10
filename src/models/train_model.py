@@ -44,16 +44,19 @@ def prepare_dataloaders(batch_size):
     VocabImageData = VocabImageDataset(annotations_file=text_path, img_dir=images_path, vocab=vocab, tokenizer=tokenizer, device=device, transform=transform)
 
 
-    training_share = 0.6 #Proportion of data that is alotted to the training set
+    training_share = 0.8 #Proportion of data that is alotted to the training set
     training_size = int(training_share*len(VocabImageData))
     test_size = len(VocabImageData) - training_size
     generator = torch.Generator().manual_seed(42)
-    training_data, test_data = random_split(VocabImageData, [training_size, test_size], generator)
+    training_data, temp = random_split(VocabImageData, [training_size, test_size], generator)
+    test_data, val_data = random_split(temp, [int(0.4*len(temp)), int(0.6*len(temp))], generator)
 
     trainloader = DataLoader(training_data, batch_size=batch_size, shuffle=True, collate_fn=collate_batch)
+    valloader = DataLoader(val_data, batch_size=batch_size, shuffle=True, collate_fn=collate_batch)
     testloader = DataLoader(test_data, batch_size=batch_size, shuffle=True, collate_fn=collate_batch)
 
-    return trainloader, testloader, training_data, test_data
+
+    return trainloader, valloader, testloader, training_data, val_data, test_data
 
 
 def main(image_size=(64,64), patch_size=(8,8), channels=3, 
@@ -68,7 +71,7 @@ def main(image_size=(64,64), patch_size=(8,8), channels=3,
 
     loss_function = TripletLoss()
 
-    train_iter, test_iter, _, _ = prepare_dataloaders(batch_size=batch_size)
+    trainloader, valloader, _, _, _, _ = prepare_dataloaders(batch_size=batch_size)
 
 
     image_encoder = ImageEncoder(image_size=image_size, patch_size=patch_size, channels=channels, 
@@ -94,7 +97,7 @@ def main(image_size=(64,64), patch_size=(8,8), channels=3,
         train_losses = []
 
         model.train()
-        for image, title, ingredients, instructions, cleaned_ingredients in tqdm.tqdm(train_iter):
+        for image, title, ingredients, instructions, cleaned_ingredients in tqdm.tqdm(trainloader):
             if torch.cuda.is_available():
                 image, title, ingredients, instructions, cleaned_ingredients = image.to('cuda'), title.to('cuda'), ingredients.to('cuda'), instructions.to('cuda'), cleaned_ingredients.to('cuda')
             opt.zero_grad()
@@ -120,8 +123,8 @@ def main(image_size=(64,64), patch_size=(8,8), channels=3,
             val_losses = []
 
             model.eval()
-            tot, cor= 0.0, 0.0
-            for image, title, ingredients, instructions, cleaned_ingredients in test_iter:
+
+            for image, title, ingredients, instructions, cleaned_ingredients in valloader:
                 if torch.cuda.is_available():
                     image, title, ingredients, instructions, cleaned_ingredients = image.to('cuda'), title.to('cuda'), ingredients.to('cuda'), instructions.to('cuda'), cleaned_ingredients.to('cuda')
                 image_features, text_features = model(image, title, ingredients, instructions)
