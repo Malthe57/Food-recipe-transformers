@@ -10,6 +10,7 @@ import torch
 import torchvision
 import torchvision.transforms as transforms
 from torch.utils.data import DataLoader, random_split
+from torchsummary import summary
 from torch.utils.tensorboard import SummaryWriter
 import matplotlib.pyplot as plt
 from einops import rearrange
@@ -83,6 +84,16 @@ def main(image_size=(64,64), patch_size=(8,8), channels=3,
                    dropout = dropout, fc_dim = fc_dim, num_tokens = 50000, pool = "mean", pos_enc = pos_enc)
     model = JointEmbedding(image_encoder=image_encoder, text_encoder=text_encoder, embed_dim = embed_dim)
 
+    model_params = sum(p.numel() for p in model.parameters())
+    print(f"Total number of parameters in the model: {model_params}")
+
+    image_params = sum(p.numel() for p in image_encoder.parameters())
+    print(f"Total number of parameters in the image encoder: {image_params}")
+
+    text_params = sum(p.numel() for p in text_encoder.parameters())
+    print(f"Total number of parameters in the text encoder: {text_params}")
+
+
 
     if torch.cuda.is_available():
         model = model.to('cuda')
@@ -91,6 +102,8 @@ def main(image_size=(64,64), patch_size=(8,8), channels=3,
     sch = torch.optim.lr_scheduler.LambdaLR(opt, lambda i: min(i / warmup_steps, 1.0))
 
     # training loop
+    i = 0
+    j = 0
     for e in range(num_epochs):
         print(f'\n epoch {e}')
 
@@ -106,7 +119,7 @@ def main(image_size=(64,64), patch_size=(8,8), channels=3,
 
             train_losses.append(loss.item())
 
-            writer.add_scalar("Train/Loss", loss, e)
+            writer.add_scalar("Train/Loss", loss, i)
 
             loss.backward()
             # if the total gradient vector has a length > 1, we clip it back down to 1.
@@ -114,6 +127,8 @@ def main(image_size=(64,64), patch_size=(8,8), channels=3,
                 nn.utils.clip_grad_norm_(model.parameters(), gradient_clipping)
             opt.step()
             sch.step()
+
+            i += 1
 
         print(f'-- {"train"} loss {np.mean(train_losses):.3}')
 
@@ -129,9 +144,11 @@ def main(image_size=(64,64), patch_size=(8,8), channels=3,
                     image, title, ingredients, instructions, cleaned_ingredients = image.to('cuda'), title.to('cuda'), ingredients.to('cuda'), instructions.to('cuda'), cleaned_ingredients.to('cuda')
                 image_features, text_features = model(image, title, ingredients, instructions)
                 val_loss = loss_function(image_features, text_features)
-                writer.add_scalar("Val/Loss", val_loss, e)
+                writer.add_scalar("Val/Loss", val_loss, j)
 
                 val_losses.append(val_loss.item())
+
+                j += 1
 
             if np.mean(val_losses) < best_val_loss:   
                 torch.save(model, model_name)

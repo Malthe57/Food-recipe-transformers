@@ -163,7 +163,7 @@ class TextEncoder(nn.Module):
 
     def forward(self, x):
 
-        tokens = self.token_embedding(x)
+        tokens = self.token_embedding(x.long())
         batch_size, seq_length, embed_dim = tokens.size()
 
         # positional encoding
