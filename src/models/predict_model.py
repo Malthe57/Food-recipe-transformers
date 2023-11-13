@@ -59,31 +59,37 @@ def prepare_dataloaders(batch_size):
 
     return trainloader, valloader, testloader, training_data, val_data, test_data
 
-def dump_pickles(features1, features2):
+def dump_pickles(features1, features2, ids):
     with open("models/test_img_features.pkl", 'wb') as f:
-        pickle.dump(features1, f)
+        pickle.dump((features1, ids), f)
     with open("models/test_text_features.pkl", 'wb') as f:
-        pickle.dump(features2, f)
+        pickle.dump((features2, ids), f)
 
 
-# def inference(model):
+def inference(model_path="models/best_model_ever.pt"):
 
-model = torch.load("models/best_model_ever.pt")
-model.eval()
+    model = torch.load(model_path)
+    model.eval()
 
-trainloader, valloader, testloader, _, _, _ = prepare_dataloaders(batch_size=1)
+    _, _, testloader, _, _, _ = prepare_dataloaders(batch_size=1)
 
 
-test_img_features = []
-test_text_features = []
+    test_img_features = []
+    test_text_features = []
+    ids = []
 
-for image, title, ingredients, instructions, cleaned_ingredients in tqdm.tqdm(testloader):
-    if torch.cuda.is_available():
-        image, title, ingredients, instructions, cleaned_ingredients = image.to('cuda'), title.to('cuda'), ingredients.to('cuda'), instructions.to('cuda'), cleaned_ingredients.to('cuda')
+    for image, title, ingredients, instructions, cleaned_ingredients, id in tqdm.tqdm(testloader):
+        if torch.cuda.is_available():
+            image, title, ingredients, instructions, cleaned_ingredients = image.to('cuda'), title.to('cuda'), ingredients.to('cuda'), instructions.to('cuda'), cleaned_ingredients.to('cuda')
 
-    image_features, text_features = model(image, title, ingredients, instructions)
+        ids.append(id)
+        image_features, text_features = model(image, title, ingredients, instructions)
 
-    test_img_features.append(image_features.detach().cpu().numpy()[0])
-    test_text_features.append(text_features.detach().cpu().numpy()[0])
+        test_img_features.append(image_features.detach().cpu().numpy()[0])
+        test_text_features.append(text_features.detach().cpu().numpy()[0])
 
-dump_pickles(features1=np.asarray(test_img_features), features2=np.asarray(test_text_features))
+
+    dump_pickles(features1=np.asarray(test_img_features), features2=np.asarray(test_text_features), ids=ids)
+
+if __name__ == "__main__":
+    inference()

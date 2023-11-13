@@ -97,7 +97,7 @@ def main(image_size=(64,64), patch_size=(8,8), channels=3,
         train_losses = []
 
         model.train()
-        for image, title, ingredients, instructions, cleaned_ingredients in tqdm.tqdm(trainloader):
+        for image, title, ingredients, instructions, cleaned_ingredients, _ in tqdm.tqdm(trainloader):
             if torch.cuda.is_available():
                 image, title, ingredients, instructions, cleaned_ingredients = image.to('cuda'), title.to('cuda'), ingredients.to('cuda'), instructions.to('cuda'), cleaned_ingredients.to('cuda')
             opt.zero_grad()
@@ -124,7 +124,7 @@ def main(image_size=(64,64), patch_size=(8,8), channels=3,
 
             model.eval()
 
-            for image, title, ingredients, instructions, cleaned_ingredients in valloader:
+            for image, title, ingredients, instructions, cleaned_ingredients, _ in valloader:
                 if torch.cuda.is_available():
                     image, title, ingredients, instructions, cleaned_ingredients = image.to('cuda'), title.to('cuda'), ingredients.to('cuda'), instructions.to('cuda'), cleaned_ingredients.to('cuda')
                 image_features, text_features = model(image, title, ingredients, instructions)

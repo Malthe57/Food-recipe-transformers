@@ -40,7 +40,7 @@ class VocabImageDataset(FoodRecipeDataset):
                        'instructions': instructions.to(self.device), 'cleaned_ingredients': cleaned_ingredients.to(self.device)}
         
 #         return output_dict
-        return self.transform(rgb_im).to(self.device), title.to(self.device), ingredients.to(self.device), instructions.to(self.device), cleaned_ingredients.to(self.device)
+        return self.transform(rgb_im).to(self.device), title.to(self.device), ingredients.to(self.device), instructions.to(self.device), cleaned_ingredients.to(self.device), idx
 
 def pad_input(input,):
     """
@@ -78,7 +78,7 @@ def pad_input(input,):
 
 def collate_batch(batch):
     
-    image, title, ingredients, instructions, cleaned_ingredients = zip(*batch)
+    image, title, ingredients, instructions, cleaned_ingredients, id = zip(*batch)
     
     image_tensor = torch.stack(image, dim=0)
     title_tensor = pad_input(title)
@@ -86,7 +86,7 @@ def collate_batch(batch):
     instructions_tensor = pad_input(instructions)
     cleaned_ingredients_tensor = pad_input(cleaned_ingredients)
     
-    return image_tensor, title_tensor, ingredients_tensor, instructions_tensor, cleaned_ingredients_tensor
+    return image_tensor, title_tensor, ingredients_tensor, instructions_tensor, cleaned_ingredients_tensor, id[0] # get id of tuple
     
     
     
