@@ -143,7 +143,9 @@ class TextEncoder(nn.Module):
         super().__init__()
 
         self.pretrained = pretrained
+        self.device =  torch.device('cuda' if torch.cuda.is_available() else 'cpu')  
         if pretrained == True:
+            print("Using pretrained BERT encoder")
             self.tokenizer = AutoTokenizer.from_pretrained("bert-base-cased")
             self.model = BertModel.from_pretrained("bert-base-uncased")
 
@@ -175,7 +177,7 @@ class TextEncoder(nn.Module):
     def forward(self, x):
 
         if self.pretrained == True:
-            tokens = self.tokenizer(x, return_tensors = 'pt', padding=True)
+            tokens = self.tokenizer(x, return_tensors = 'pt', padding=True).to(self.device)
 
             output = self.model(**tokens)
             last_hidden_state = output.last_hidden_state[:, 0, :]

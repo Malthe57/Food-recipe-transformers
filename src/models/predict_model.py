@@ -66,7 +66,7 @@ def dump_pickles(features1, features2, ids):
         pickle.dump((features2, ids), f)
 
 
-def inference(model_path="models/best_model_ever2.pt"):
+def inference(model_path="models/best_model_ever_title.pt"):
 
     model = torch.load(model_path)
     model.eval()

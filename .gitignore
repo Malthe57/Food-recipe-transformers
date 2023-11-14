@@ -3,5 +3,6 @@
 *.npz
 dataset/
 food/
+runs/
 *.pyc
 src/__pycache__/dataset_class.cpython-310.pyc

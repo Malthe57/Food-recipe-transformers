@@ -9,6 +9,8 @@ from torchvision import transforms
 from torch.utils.data import DataLoader, random_split
 import os
 from torchtext.data.utils import get_tokenizer
+from torchvision import models
+
 
 def positional_encoding_2d(nph, npw, dim, temperature=10000, dtype=torch.float32):
     y, x = torch.meshgrid(torch.arange(nph), torch.arange(npw), indexing="ij")
@@ -93,7 +95,7 @@ class EncoderBlock(nn.Module):
 class ImageEncoder(nn.Module):
     def __init__(self, image_size, channels, patch_size, embed_dim, num_heads, num_layers,
                  pos_enc='learnable', pool='cls', dropout=0.0, 
-                 fc_dim=None, num_classes=2, ):
+                 fc_dim=None):
         
         super().__init__()
 
@@ -145,7 +147,6 @@ class ImageEncoder(nn.Module):
                 EncoderBlock(embed_dim=embed_dim, num_heads=num_heads, fc_dim=fc_dim, dropout=dropout))
 
         self.transformer_blocks = nn.Sequential(*transformer_blocks)
-        self.classifier = nn.Linear(embed_dim, num_classes)
         self.dropout = nn.Dropout(dropout)
 
 
@@ -179,19 +180,59 @@ class ImageEncoder(nn.Module):
 
         return x
     
+class ResNetBackbone(nn.Module):
+    """Class for Torchvision models
+
+    Parameters
+    ----------
+    hidden_size : int
+        Embedding size.
+    image_model : string
+        Model name to load.
+    pretrained : bool
+        Whether to load pretrained imagenet weights.
+
+    """
+    def __init__(self, embed_dim):
+        super(ResNetBackbone, self).__init__()
+        backbone = models.resnet50(weights='ResNet50_Weights.DEFAULT')
+        modules = list(backbone.children())[:-2]
+        self.backbone = nn.Sequential(*modules)
+        in_feats = backbone.fc.in_features
+
+        self.fc = nn.Linear(in_feats, embed_dim)
+
+    def forward(self, images, freeze_backbone=True):
+        """Extract feature vectors from input images."""
+        if not freeze_backbone:
+            feats = self.backbone(images)
+        else:
+            with torch.no_grad():
+                feats = self.backbone(images)
+        feats = feats.view(feats.size(0), feats.size(1),
+                           feats.size(2)*feats.size(3))
+
+        feats = torch.mean(feats, dim=-1)
+        out = self.fc(feats)
+
+        return nn.Tanh()(out)
+    
     
 if __name__ == '__main__':
     print('Testing ImageEncoder')
-    image_size = (64, 64)
-    patch_size = (8,8)
-    channels = 3
-    embed_dim = 128
-    num_heads = 4
-    num_layers = 4
-    pos_enc = 'learnable'
-    pool = 'cls'
 
-    encoder = ImageEncoder(image_size=image_size, channels=channels, patch_size=patch_size, embed_dim=128, num_heads=4, num_layers=4, pos_enc='learnable', pool='cls')
+    encoder = ResNetBackbone(embed_dim=128)
+
+    image_size = (64, 64)
+    # patch_size = (8,8)
+    # channels = 3
+    # embed_dim = 128
+    # num_heads = 4
+    # num_layers = 4
+    # pos_enc = 'learnable'
+    # pool = 'cls'
+
+    # encoder = ImageEncoder(image_size=image_size, channels=channels, patch_size=patch_size, embed_dim=128, num_heads=4, num_layers=4, pos_enc='learnable', pool='cls')
 
     current_working_directory = os.getcwd()
     images_path = os.path.join(current_working_directory, "src/dataset/Food Images")
@@ -217,9 +258,9 @@ if __name__ == '__main__':
 
     encoder.to(device=device)
 
-    for image, title, ingredients, instructions, cleaned_ingredients in train_dataloader:
+    for image, title, ingredients, instructions, cleaned_ingredients, _ in train_dataloader:
         output = encoder(image)
 
         print("Image transformer output shape:", output.shape)
 
-        # break
+    #     # break

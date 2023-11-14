@@ -20,6 +20,7 @@ class FoodRecipeDataset(Dataset):
     def __getitem__(self, idx):
         img_path = str(os.path.join(self.img_dir, self.img_text.iloc[idx, 3]) + ".jpg")
         image = Image.open(img_path)
+        rgb_im = image.convert('RGB')
         title = str(self.img_text.iloc[idx, 0])
         ingredients = str(self.img_text.iloc[idx, 1])
         instructions = str(self.img_text.iloc[idx, 2])
@@ -29,7 +30,7 @@ class FoodRecipeDataset(Dataset):
 
 
         if self.transform:
-            image = self.transform(image)
+            rgb_im = self.transform(rgb_im)
         if self.target_transform:
             title = self.target_transform(title)
             ingredients = self.target_transform(ingredients)
@@ -37,5 +38,5 @@ class FoodRecipeDataset(Dataset):
             cleaned_ingredients = self.target_transform(cleaned_ingredients)
 
 
-        return image, title, ingredients, instructions, cleaned_ingredients
+        return rgb_im, title, ingredients, instructions, cleaned_ingredients, idx
 
