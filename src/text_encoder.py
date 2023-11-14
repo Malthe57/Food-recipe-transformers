@@ -4,10 +4,12 @@ from torch import nn
 import torch.nn.functional as F
 from einops import rearrange, repeat
 from VocabImagedataset_class import VocabImageDataset, pad_input, collate_batch
+from dataset_class import FoodRecipeDataset
 from torchvision import transforms
 from torch.utils.data import DataLoader, random_split
 import os
 from torchtext.data.utils import get_tokenizer
+from transformers import AutoTokenizer, BertModel, BertConfig
 
 def to_device(tensor=None):
     if tensor is None:
@@ -136,58 +138,76 @@ class PositionalEmbedding(nn.Module):
 
 class TextEncoder(nn.Module):
     def __init__(self, embed_dim, num_heads, num_layers, max_seq_len, dropout=0.0, 
-                fc_dim=None, num_tokens=50_000, pool='mean', pos_enc='learnable'
+                fc_dim=None, num_tokens=50_000, pool='mean', pos_enc='learnable', pretrained = False
     ):
         super().__init__()
 
-        assert pool in ['mean', 'max']
-        assert pos_enc in ['fixed', 'learnable']
-        
-        self.pool, self.pos_enc, = pool, pos_enc
+        self.pretrained = pretrained
+        if pretrained == True:
+            self.tokenizer = AutoTokenizer.from_pretrained("bert-base-cased")
+            self.model = BertModel.from_pretrained("bert-base-uncased")
+
+            for param in self.model.parameters():
+                param.requires_grad = False
+
+        else:
+            assert pool in ['mean', 'max']
+            assert pos_enc in ['fixed', 'learnable']
+            
+            self.pool, self.pos_enc, = pool, pos_enc
 
 
-        self.token_embedding = nn.Embedding(embedding_dim=embed_dim, num_embeddings=num_tokens)
-        
-        if self.pos_enc == 'learnable':
-            self.positional_encoding = PositionalEmbedding(embed_dim=embed_dim, max_seq_len=max_seq_len)
-        elif self.pos_enc == 'fixed':
-            self.positional_encoding = PositionalEncoding(embed_dim=embed_dim, max_seq_len=max_seq_len)
+            self.token_embedding = nn.Embedding(embedding_dim=embed_dim, num_embeddings=num_tokens)
+            
+            if self.pos_enc == 'learnable':
+                self.positional_encoding = PositionalEmbedding(embed_dim=embed_dim, max_seq_len=max_seq_len)
+            elif self.pos_enc == 'fixed':
+                self.positional_encoding = PositionalEncoding(embed_dim=embed_dim, max_seq_len=max_seq_len)
 
-        transformer_blocks = []
-        for _ in range(num_layers):
-            transformer_blocks.append(
-                EncoderBlock(embed_dim=embed_dim, num_heads=num_heads, fc_dim=fc_dim, dropout=dropout))
+            transformer_blocks = []
+            for _ in range(num_layers):
+                transformer_blocks.append(
+                    EncoderBlock(embed_dim=embed_dim, num_heads=num_heads, fc_dim=fc_dim, dropout=dropout))
 
-        self.transformer_blocks = nn.Sequential(*transformer_blocks)
-        self.dropout = nn.Dropout(dropout)
+            self.transformer_blocks = nn.Sequential(*transformer_blocks)
+            self.dropout = nn.Dropout(dropout)
 
     def forward(self, x):
 
-        tokens = self.token_embedding(x.long())
-        batch_size, seq_length, embed_dim = tokens.size()
+        if self.pretrained == True:
+            tokens = self.tokenizer(x, return_tensors = 'pt', padding=True)
 
-        # positional encoding
-        # learnable: torch.Size([32, 12, 128])
-
-
-        if self.pos_enc == 'fixed':
-            x = self.positional_encoding(tokens) # torch.Size([32, 9, 128])
-        elif self.pos_enc == 'learnable':
-            x = tokens + self.positional_encoding.to(tokens.device, dtype=tokens.dtype)(tokens)
-        x = self.dropout(x) 
-        x = self.transformer_blocks(x)
-
-        if self.pool =='max':
-            x = x.max(dim=1)[0]
-        elif self.pool =='mean':
-            x = x.mean(dim=1)
+            output = self.model(**tokens)
+            last_hidden_state = output.last_hidden_state[:, 0, :]
+            return last_hidden_state
         
-        return x
+        else:
+            tokens = self.token_embedding(x.long())
+            batch_size, seq_length, embed_dim = tokens.size()
+
+            # positional encoding
+            # learnable: torch.Size([32, 12, 128])
+
+
+            if self.pos_enc == 'fixed':
+                x = self.positional_encoding(tokens) # torch.Size([32, 9, 128])
+            elif self.pos_enc == 'learnable':
+                x = tokens + self.positional_encoding.to(tokens.device, dtype=tokens.dtype)(tokens)
+            x = self.dropout(x) 
+            x = self.transformer_blocks(x)
+
+            if self.pool =='max':
+                x = x.max(dim=1)[0]
+            elif self.pool =='mean':
+                x = x.mean(dim=1)
+            
+            return x
  
 if __name__ == '__main__':
-    title_encoder = TextEncoder(embed_dim=128, num_heads=4, num_layers=4, max_seq_len=512, dropout=0.0, fc_dim=None, num_tokens=50_000, pool='mean', pos_enc='learnable')
-    ingredients_encoder = TextEncoder(embed_dim=128, num_heads=4, num_layers=4, max_seq_len=512, dropout=0.0, fc_dim=None, num_tokens=50_000, pool='mean', pos_enc='learnable')
-    instructions_encoder = TextEncoder(embed_dim=128, num_heads=4, num_layers=4, max_seq_len=512, dropout=0.0, fc_dim=None, num_tokens=50_000, pool='mean', pos_enc='learnable')
+    pretrained = True
+    title_encoder = TextEncoder(embed_dim=128, num_heads=4, num_layers=4, max_seq_len=512, dropout=0.0, fc_dim=None, num_tokens=50_000, pool='mean', pos_enc='learnable', pretrained=pretrained)
+    # ingredients_encoder = TextEncoder(embed_dim=128, num_heads=4, num_layers=4, max_seq_len=512, dropout=0.0, fc_dim=None, num_tokens=50_000, pool='mean', pos_enc='learnable', pretrained=pretrained)
+    # instructions_encoder = TextEncoder(embed_dim=128, num_heads=4, num_layers=4, max_seq_len=512, dropout=0.0, fc_dim=None, num_tokens=50_000, pool='mean', pos_enc='learnable', pretrained=pretrained)
 
     current_working_directory = os.getcwd()
     images_path = os.path.join(current_working_directory, "src/dataset/Food Images")
@@ -201,7 +221,10 @@ if __name__ == '__main__':
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    VocabImage = VocabImageDataset(annotations_file=text_path, img_dir=images_path, vocab=vocab, tokenizer=tokenizer, device=device, transform=image_transform)
+    if pretrained:
+        VocabImage = FoodRecipeDataset(text_path, images_path, transforms.ToTensor())
+    else:
+        VocabImage = VocabImageDataset(annotations_file=text_path, img_dir=images_path, vocab=vocab, tokenizer=tokenizer, device=device, transform=image_transform)
     training_share = 0.8 #Proportion of data that is alotted to the training set
     training_size = int(training_share*len(VocabImage))
     test_size = len(VocabImage) - training_size
@@ -209,13 +232,16 @@ if __name__ == '__main__':
     train_data, temp = random_split(VocabImage, [training_size, test_size], generator)
     test_data, val_data = random_split(temp, [int(0.4*len(temp)), int(0.6*len(temp))], generator)
     
-    train_dataloader = DataLoader(train_data, batch_size=32, shuffle=True, collate_fn=collate_batch)
+    if pretrained:
+        train_dataloader = DataLoader(train_data, batch_size=32, shuffle=True)
+    else:
+        train_dataloader = DataLoader(train_data, batch_size=32, shuffle=True, collate_fn=collate_batch)
 
     for image, title, ingredients, instructions, cleaned_ingredients in train_dataloader:
         title_output = title_encoder(title)
-        ingredients_output = ingredients_encoder(ingredients)
-        instructions_output = instructions_encoder(instructions)
+        # ingredients_output = ingredients_encoder(ingredients)
+        # instructions_output = instructions_encoder(instructions)
 
-        output = torch.cat((title_output, ingredients_output, instructions_output), dim=1)
-        print("Text transformer output shape:", output.shape)
+        # output = torch.cat((title_output, ingredients_output, instructions_output), dim=1)
+        print("Text transformer output shape:", title_output.shape)
         break
