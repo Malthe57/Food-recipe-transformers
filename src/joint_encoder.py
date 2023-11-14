@@ -12,13 +12,15 @@ import os
 from torchtext.data.utils import get_tokenizer
 
 class JointEmbedding(nn.Module):
-    def __init__(self, image_encoder, text_encoder, embed_dim=128, only_title=False):
+    def __init__(self, image_encoder, title_encoder, ingredients_encoder, instructions_encoder, embed_dim=128, only_title=False):
 
         super().__init__()        
         self.only_title = only_title
         self.image_encoder = image_encoder
 
-        self.text_encoder = text_encoder
+        self.title_encoder = title_encoder
+        self.ingredients_encoder = ingredients_encoder
+        self.instructions_encoder = instructions_encoder
 
         # linear layer to merge features from all recipe components.
         if only_title:
@@ -33,14 +35,14 @@ class JointEmbedding(nn.Module):
 
         if self.only_title:
             img_feat = self.img_linear(self.image_encoder(img))
-            text_features = self.text_linear(self.text_encoder(title))
+            text_features = self.text_linear(self.title_encoder(title))
 
         else:
             img_feat = self.img_linear(self.image_encoder(img))
 
-            title_feat = self.text_encoder(title)
-            ingredients_feat = self.text_encoder(ingredients)
-            instructions_feat = self.text_encoder(instructions)
+            title_feat = self.title_encoder(title)
+            ingredients_feat = self.ingredients_encoder(ingredients)
+            instructions_feat = self.instructions_encoder(instructions)
 
             text_features = self.text_linear(torch.cat([title_feat, ingredients_feat, instructions_feat], dim=1))
 
