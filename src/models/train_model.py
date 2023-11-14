@@ -95,7 +95,7 @@ def main(image_size=(64,64), patch_size=(8,8), channels=3,
     print(f"Total number of parameters in the image encoder: {image_params}")
 
     text_params = sum(p.numel() for p in title_encoder.parameters())
-    print(f"Total number of parameters in the text encoder: {text_params}")
+    print(f"Total number of parameters in the title encoder: {text_params}")
 
 
 
