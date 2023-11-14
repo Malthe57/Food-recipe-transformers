@@ -1,21 +1,21 @@
 #!/bin/sh
-#BSUB -J backbone
-#BSUB -o backbone%J.out
-#BSUB -e backbone%J.err
-#BSUB -q gpuh100
+#BSUB -J FT
+#BSUB -o FoodTransformer%J.out
+#BSUB -e FoodTransformer%J.err
+#BSUB -q gpuv100
 #BSUB -gpu "num=1:mode=exclusive_process"
-#BSUB -n 1
+#BSUB -n 4
 #BSUB -R "rusage[mem=8G]"
-#BSUB -W 4:00
+#BSUB -W 24:00
 #BSUB -N
 # end of BSUB options
 
 module load python3/3.9.6
 
 # load CUDA (for GPU support)
-module load cuda/11.3
+module load cuda/11.8
 
 # activate the virtual environment
-source DeepLearning/bin/activate
+source food/bin/activate
 
-python backbone_hpc.py
+python src/models/train_model.py

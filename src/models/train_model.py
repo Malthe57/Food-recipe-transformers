@@ -165,4 +165,4 @@ if __name__ == "__main__":
     set_seed(seed=1)
 
     model_path = "models/best_model_ever.pt"
-    model = main(image_size=(64, 64), patch_size=(8,8), model_name=model_path)
+    model = main(image_size=(64, 64), patch_size=(8,8), model_name=model_path, lr=3e-4, num_epochs=200)
