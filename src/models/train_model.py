@@ -10,7 +10,6 @@ import torch
 import torchvision
 import torchvision.transforms as transforms
 from torch.utils.data import DataLoader, random_split
-from torchsummary import summary
 from torch.utils.tensorboard import SummaryWriter
 import matplotlib.pyplot as plt
 from einops import rearrange
@@ -104,6 +103,7 @@ def main(image_size=(64,64), patch_size=(8,8), channels=3,
     # training loop
     i = 0
     j = 0
+    best_val_loss = np.inf
     for e in range(num_epochs):
         print(f'\n epoch {e}')
 
@@ -133,7 +133,6 @@ def main(image_size=(64,64), patch_size=(8,8), channels=3,
         print(f'-- {"train"} loss {np.mean(train_losses):.3}')
 
         with torch.no_grad():
-            best_val_loss = np.inf
 
             val_losses = []
 
