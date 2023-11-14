@@ -17,10 +17,12 @@ class JointEmbedding(nn.Module):
         super().__init__()        
         self.only_title = only_title
         self.image_encoder = image_encoder
-
-        self.title_encoder = title_encoder
-        self.ingredients_encoder = ingredients_encoder
-        self.instructions_encoder = instructions_encoder
+        if only_title:
+            self.title_encoder = title_encoder
+        else:
+            self.title_encoder = title_encoder
+            self.ingredients_encoder = ingredients_encoder
+            self.instructions_encoder = instructions_encoder
 
         # linear layer to merge features from all recipe components.
         if only_title:
