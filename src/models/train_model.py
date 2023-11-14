@@ -81,7 +81,7 @@ def main(image_size=(64,64), patch_size=(8,8), channels=3,
     
     text_encoder = TextEncoder(embed_dim=embed_dim, num_heads=num_heads, num_layers = num_layers, max_seq_len = 512,
                    dropout = dropout, fc_dim = fc_dim, num_tokens = 50000, pool = "mean", pos_enc = pos_enc)
-    model = JointEmbedding(image_encoder=image_encoder, text_encoder=text_encoder, embed_dim = embed_dim)
+    model = JointEmbedding(image_encoder=image_encoder, text_encoder=text_encoder, embed_dim = embed_dim, only_title=True)
 
     model_params = sum(p.numel() for p in model.parameters())
     print(f"Total number of parameters in the model: {model_params}")
@@ -151,7 +151,7 @@ def main(image_size=(64,64), patch_size=(8,8), channels=3,
 
             if np.mean(val_losses) < best_val_loss:   
                 torch.save(model, model_name)
-                best_val_loss = val_loss
+                best_val_loss = np.mean(val_losses)
                 print("Saving model!")
         
 

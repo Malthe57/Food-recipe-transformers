@@ -12,26 +12,37 @@ import os
 from torchtext.data.utils import get_tokenizer
 
 class JointEmbedding(nn.Module):
-    def __init__(self, image_encoder, text_encoder, embed_dim=128):
+    def __init__(self, image_encoder, text_encoder, embed_dim=128, only_title=False):
 
         super().__init__()        
+        self.only_title = only_title
         self.image_encoder = image_encoder
 
         self.text_encoder = text_encoder
 
         # linear layer to merge features from all recipe components.
-        self.text_linear = nn.Linear(embed_dim*3, embed_dim)
-        self.img_linear = nn.Linear(embed_dim, embed_dim)
+        if only_title:
+            print("Training only on image and title")
+            self.text_linear = nn.Linear(embed_dim, embed_dim)
+            self.img_linear = nn.Linear(embed_dim, embed_dim)
+        else:
+            self.text_linear = nn.Linear(embed_dim*3, embed_dim)
+            self.img_linear = nn.Linear(embed_dim, embed_dim)
 
     def forward(self, img, title, ingredients, instructions):
 
-        img_feat = self.img_linear(self.image_encoder(img))
+        if self.only_title:
+            img_feat = self.img_linear(self.image_encoder(img))
+            text_features = self.text_linear(self.text_encoder(title))
 
-        title_feat = self.text_encoder(title)  
-        ingredients_feat = self.text_encoder(ingredients)
-        instructions_feat = self.text_encoder(instructions)
+        else:
+            img_feat = self.img_linear(self.image_encoder(img))
 
-        text_features = self.text_linear(torch.cat([title_feat, ingredients_feat, instructions_feat], dim=1))
+            title_feat = self.text_encoder(title)
+            ingredients_feat = self.text_encoder(ingredients)
+            instructions_feat = self.text_encoder(instructions)
+
+            text_features = self.text_linear(torch.cat([title_feat, ingredients_feat, instructions_feat], dim=1))
 
         return img_feat, text_features
 

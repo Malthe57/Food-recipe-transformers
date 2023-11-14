@@ -2,5 +2,6 @@
 *.xml
 *.npz
 dataset/
+food/
 *.pyc
 src/__pycache__/dataset_class.cpython-310.pyc
