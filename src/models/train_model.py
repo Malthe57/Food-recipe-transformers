@@ -152,7 +152,7 @@ def main(image_size=(64,64), patch_size=(8,8), channels=3,
             if np.mean(val_losses) < best_val_loss:   
                 torch.save(model, model_name)
                 best_val_loss = np.mean(val_losses)
-                print("Saving model!")
+                print(f"New best model with val loss: {best_val_loss:.3}")
         
 
     return model
