@@ -12,21 +12,30 @@ import os
 from torchtext.data.utils import get_tokenizer
 
 class JointEmbedding(nn.Module):
-    def __init__(self, image_encoder, title_encoder, ingredients_encoder, instructions_encoder, embed_dim=128, only_title=False, pretrained=False):
+    def __init__(self, image_encoder, title_encoder, ingredients_encoder, instructions_encoder, embed_dim=128, mode=1, pretrained=False):
 
+        #mode: Determines which text data to use
+        #1: only title
+        #2: title + ingredients
+        #3: title + ingredients + instructions (to be implimented)
         super().__init__()        
-        self.only_title = only_title
+        self.mode = mode
         self.pretrained = pretrained
         self.image_encoder = image_encoder
-        if only_title:
+        if mode == 1:
             self.title_encoder = title_encoder
-        else:
+        elif mode == 2:
+            self.title_encoder = title_encoder
+            self.ingredients_encoder = ingredients_encoder
+        elif mode == 3:
             self.title_encoder = title_encoder
             self.ingredients_encoder = ingredients_encoder
             self.instructions_encoder = instructions_encoder
+        else:
+            print("Error: Incorrect mode. Mode should be 1, 2 or 3")
 
         # linear layer to merge features from all recipe components.
-        scale_factor = 1 if only_title else 3
+        scale_factor = mode
 
         if pretrained:
             print("Training only on image and title")
@@ -38,11 +47,18 @@ class JointEmbedding(nn.Module):
 
     def forward(self, img, title, ingredients, instructions):
 
-        if self.only_title:
+        if self.mode == 1:
             img_feat = self.img_linear(self.image_encoder(img))
             text_features = self.text_linear(self.title_encoder(title))
 
-        else:
+        elif self.mode == 2:
+            img_feat = self.img_linear(self.image_encoder(img))
+
+            title_feat = self.title_encoder(title)
+            ingredients_feat = self.ingredients_encoder(ingredients)
+
+            text_features = self.text_linear(torch.cat([title_feat, ingredients_feat], dim=1))
+        elif self.mode == 3:
             img_feat = self.img_linear(self.image_encoder(img))
 
             title_feat = self.title_encoder(title)
@@ -50,6 +66,9 @@ class JointEmbedding(nn.Module):
             instructions_feat = self.instructions_encoder(instructions)
 
             text_features = self.text_linear(torch.cat([title_feat, ingredients_feat, instructions_feat], dim=1))
+        
+        else:
+            print("Error: incorrect mode")
 
         return img_feat, text_features
 
