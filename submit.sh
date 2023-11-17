@@ -1,5 +1,5 @@
 #!/bin/sh
-#BSUB -J FT
+#BSUB -J OurEncoders
 #BSUB -o FoodTransformer%J.out
 #BSUB -e FoodTransformer%J.err
 #BSUB -q gpuv100
