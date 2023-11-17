@@ -18,4 +18,4 @@ module load cuda/11.8
 # activate the virtual environment
 source food/bin/activate
 
-python src/models/train_model.py
+python src/models/train_model.py --image_size 224 --model_name "models/best_model_ever_1.pt" --mode 1 --pretrained
