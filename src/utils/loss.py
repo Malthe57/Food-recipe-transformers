@@ -44,7 +44,7 @@ class TripletLoss(nn.Module):
         Distance metric (either euclidean or cosine)
     """
 
-    def __init__(self, margin=0.1, metric='cosine'):
+    def __init__(self, margin=0.3, metric='cosine'):
 
         super(TripletLoss, self).__init__()
         self.distance_function = euclidean_dist if metric == 'euclidean' else cosine_dist

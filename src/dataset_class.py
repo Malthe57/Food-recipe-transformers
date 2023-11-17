@@ -38,5 +38,5 @@ class FoodRecipeDataset(Dataset):
             cleaned_ingredients = self.target_transform(cleaned_ingredients)
 
 
-        return rgb_im, title, ingredients, instructions, cleaned_ingredients, idx
+        return rgb_im, title[:512], ingredients[:512], instructions[:512], cleaned_ingredients[:512], idx
 
