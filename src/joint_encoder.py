@@ -23,11 +23,14 @@ class JointEmbedding(nn.Module):
         self.pretrained = pretrained
         self.image_encoder = image_encoder
         if mode == 1:
+            print("Training only on image and title")
             self.title_encoder = title_encoder
         elif mode == 2:
+            print("Training only on image and title, ingredients")
             self.title_encoder = title_encoder
             self.ingredients_encoder = ingredients_encoder
         elif mode == 3:
+            print("Training only on image and title, ingredients, instructions")
             self.title_encoder = title_encoder
             self.ingredients_encoder = ingredients_encoder
             self.instructions_encoder = instructions_encoder
@@ -38,7 +41,6 @@ class JointEmbedding(nn.Module):
         scale_factor = mode
 
         if pretrained:
-            print("Training only on image and title")
             self.text_linear = nn.Linear(6*embed_dim*scale_factor, embed_dim)
             self.img_linear = nn.Linear(embed_dim, embed_dim)
         else:
