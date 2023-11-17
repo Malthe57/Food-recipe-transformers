@@ -12,7 +12,9 @@
             "console": "integratedTerminal",
             "justMyCode": true, 
             "args": ["--image_size", "224",
-                     "--pretrained"]
+                     "--mode", "2",
+                     "--pretrained"
+                     ]
         }
     ]
 }
