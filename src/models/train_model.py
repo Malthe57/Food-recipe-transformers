@@ -34,14 +34,16 @@ def set_seed(seed=1):
     torch.backends.cudnn.deterministic = True
 
 
-def prepare_dataloaders(batch_size, pretrained=False):
+def prepare_dataloaders(batch_size, pretrained=False, image_size=(224,224)):
     
     current_working_directory = os.getcwd()
     images_path = os.path.join(current_working_directory, "src/dataset/Food Images")
     text_path = os.path.join(current_working_directory, "src/dataset/food.csv")
     vocab = torch.load("src/dataset/vocab.pt")
     tokenizer = get_tokenizer("basic_english")
-    transform = transforms.Compose([transforms.Resize((64,64)),transforms.ToTensor()])
+    transform = transforms.Compose([transforms.Resize(image_size),transforms.ToTensor(),
+                                    transforms.Normalize((0.485, 0.456, 0.406),
+                                                (0.229, 0.224, 0.225))])
 
     if pretrained:
         VocabImage = FoodRecipeDataset(text_path, images_path, transform=transform)
@@ -56,12 +58,12 @@ def prepare_dataloaders(batch_size, pretrained=False):
     test_data, val_data = random_split(temp, [int(0.4*len(temp)), int(0.6*len(temp))], generator)
 
     if pretrained:
-        trainloader = DataLoader(training_data, batch_size=32, shuffle=True)
+        trainloader = DataLoader(training_data, batch_size=batch_size, shuffle=True)
         valloader = DataLoader(val_data, batch_size=batch_size, shuffle=False)
         testloader = DataLoader(test_data, batch_size=batch_size, shuffle=False)
         
     else:
-        trainloader = DataLoader(training_data, batch_size=32, shuffle=True, collate_fn=collate_batch)
+        trainloader = DataLoader(training_data, batch_size=batch_size, shuffle=True, collate_fn=collate_batch)
         valloader = DataLoader(val_data, batch_size=batch_size, shuffle=False, collate_fn=collate_batch)
         testloader = DataLoader(test_data, batch_size=batch_size, shuffle=False, collate_fn=collate_batch)
 
@@ -78,9 +80,9 @@ def main(image_size=(64,64), patch_size=(8,8), channels=3,
 
     writer = SummaryWriter()
 
-    loss_function = TripletLoss()
+    loss_function = TripletLoss(margin=0.1)
 
-    trainloader, valloader, _, _, _, _ = prepare_dataloaders(batch_size=batch_size, pretrained=pretrained)
+    trainloader, valloader, _, _, _, _ = prepare_dataloaders(batch_size=batch_size, pretrained=pretrained, image_size=image_size)
 
     if pretrained:
         image_encoder = ResNetBackbone(embed_dim=embed_dim)
@@ -98,7 +100,7 @@ def main(image_size=(64,64), patch_size=(8,8), channels=3,
                 dropout = dropout, fc_dim = fc_dim, num_tokens = 50000, pool = "mean", pos_enc = pos_enc, pretrained=pretrained)
     
     model = JointEmbedding(image_encoder=image_encoder, title_encoder=title_encoder, ingredients_encoder=ingredients_encoder, 
-                           instructions_encoder=instructions_encoder, embed_dim = embed_dim, only_title=only_title)
+                           instructions_encoder=instructions_encoder, embed_dim = embed_dim, only_title=only_title, pretrained=pretrained)
 
     model_params = sum(p.numel() for p in model.parameters())
     print(f"Total number of parameters in the model: {model_params}")
@@ -109,13 +111,11 @@ def main(image_size=(64,64), patch_size=(8,8), channels=3,
     text_params = sum(p.numel() for p in title_encoder.parameters())
     print(f"Total number of parameters in the title encoder: {text_params}")
 
-
-
     if torch.cuda.is_available():
         model = model.to('cuda')
 
     opt = torch.optim.AdamW(lr=lr, params=model.parameters(), weight_decay=weight_decay)
-    sch = torch.optim.lr_scheduler.LambdaLR(opt, lambda i: min(i / warmup_steps, 1.0))
+    sch = torch.optim.lr_scheduler.LambdaLR(opt, lambda k: min(k / warmup_steps, 1.0))
 
     # training loop
     i = 0
@@ -184,11 +184,11 @@ if __name__ == "__main__":
     #os.environ["CUDA_VISIBLE_DEVICES"]= str(0)
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')  
     print(f"Model will run on {device}")
-    set_seed(seed=1)
+    set_seed(seed=42)
 
     parser = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument('--image_size', type=int, default=64,
+    parser.add_argument('--image_size', type=int, default=224,
                         help='image size')
     parser.add_argument('--patch_size', type=int, default=8, help='patch size')
     parser.add_argument('--channels', type=int, default=3, help='number of channels')
@@ -199,7 +199,7 @@ if __name__ == "__main__":
     parser.add_argument('--pool', type=str, default='cls', help='pooling')
     parser.add_argument('--num_epochs', type=int, default=200, help='number of epochs')
     parser.add_argument('--batch_size', type=int, default=32, help='batch size')
-    parser.add_argument('--lr', type=float, default=3e-4, help='learning rate')
+    parser.add_argument('--lr', type=float, default=3e-5, help='learning rate')
     parser.add_argument('--model_name', type=str, default='models/best_model_ever.pt', help='model name')
     parser.add_argument('--only_title', default=True, action='store_true') 
     parser.add_argument('--pretrained', default=False, action='store_true')   

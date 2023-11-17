@@ -12,10 +12,11 @@ import os
 from torchtext.data.utils import get_tokenizer
 
 class JointEmbedding(nn.Module):
-    def __init__(self, image_encoder, title_encoder, ingredients_encoder, instructions_encoder, embed_dim=128, only_title=False):
+    def __init__(self, image_encoder, title_encoder, ingredients_encoder, instructions_encoder, embed_dim=128, only_title=False, pretrained=False):
 
         super().__init__()        
         self.only_title = only_title
+        self.pretrained = pretrained
         self.image_encoder = image_encoder
         if only_title:
             self.title_encoder = title_encoder
@@ -25,12 +26,14 @@ class JointEmbedding(nn.Module):
             self.instructions_encoder = instructions_encoder
 
         # linear layer to merge features from all recipe components.
-        if only_title:
+        scale_factor = 1 if only_title else 3
+
+        if pretrained:
             print("Training only on image and title")
-            self.text_linear = nn.Linear(6*embed_dim, embed_dim)
+            self.text_linear = nn.Linear(6*embed_dim*scale_factor, embed_dim)
             self.img_linear = nn.Linear(embed_dim, embed_dim)
         else:
-            self.text_linear = nn.Linear(embed_dim*3, embed_dim)
+            self.text_linear = nn.Linear(6*embed_dim*scale_factor, embed_dim)
             self.img_linear = nn.Linear(embed_dim, embed_dim)
 
     def forward(self, img, title, ingredients, instructions):
@@ -57,7 +60,7 @@ if __name__ == '__main__':
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    text_encoder = TextEncoder(embed_dim=128, num_heads=4, num_layers=4, max_seq_len=512, dropout=0.0, fc_dim=None, num_tokens=50_000, num_classes=2, pool='mean', pos_enc='learnable')
+    text_encoder = TextEncoder(embed_dim=128, num_heads=4, num_layers=4, max_seq_len=512, dropout=0.0, fc_dim=None, num_tokens=50_000, pool='mean', pos_enc='learnable')
     text_encoder.to(device=device)
     image_encoder = ImageEncoder(image_size=image_size, channels=channels, patch_size=patch_size, embed_dim=128, num_heads=4, num_layers=4, pos_enc='learnable', pool='cls')
     image_encoder.to(device=device)
