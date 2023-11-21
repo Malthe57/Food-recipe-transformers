@@ -10,7 +10,7 @@ from sklearn.metrics import pairwise_distances
 # Taken from: https://github.com/amzn/image-to-recipe-transformers/blob/main/src/test.py
 
 
-def compute_metrics(queries, database, metric='cosine',
+def compute_metrics(queries, database, ids, metric='cosine',
                     recall_klist=(1, 5, 10), return_raw=False):
     """Function to compute Median Rank and Recall@k metrics given two sets of
        aligned embeddings.
@@ -49,14 +49,24 @@ def compute_metrics(queries, database, metric='cosine',
     positions = np.count_nonzero(dists < np.diag(dists)[:, None], axis=-1) + 1
 
     # get the topk elements for each query (topk elements with lower dist)
-    rankings = np.argpartition(dists, range(max_k), axis=-1)[:, :max_k]
-
+    # get elements smaller than the k'th element are moved before the k'th element, and the whole array is sorted
+    # rankings = np.argpartition(dists, range(max_k), axis=-1)[:, :max_k]
+    # rankings = np.argpartition(dists, range(max_k), axis=-1)
+    rankings = np.argsort(dists, axis=-1)
     # positive positions for each query (inputs are assumed to be aligned)
     positive_idxs = np.array(range(dists.shape[0]))
     # matrix containing a cumulative sum of topk matches for each query
     # if cum_matches_topk[q][k] = 1, it means that the positive for query q
     # was already found in position <=k. if not, the value at that position
     # will be 0.
+
+    # compare closest distances with the indices
+    # in a perfect world, the closest distance would be the same as the index
+    match_idx, _ = np.nonzero(rankings[:,0][:,None] == np.arange(0, len(ids))[:,None])
+
+    dataloader_match_idx = np.array(ids)[match_idx]
+
+    
     cum_matches_topk = np.cumsum(rankings == positive_idxs[:, None],
                                  axis=-1)
 
@@ -65,6 +75,7 @@ def compute_metrics(queries, database, metric='cosine',
 
     metrics = {}
     metrics['medr'] = np.median(positions)
+    metrics['idx'] = dataloader_match_idx
 
     for index in recall_klist:
         metrics[f'recall_{int(index)}'] = recall_values[int(index)-1]

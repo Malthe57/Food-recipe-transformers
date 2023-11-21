@@ -1,13 +1,22 @@
 from utils.metrics import compute_metrics
 import pickle
 
-img_features, ids = pickle.load(open("models/test_img_features.pkl", 'rb'))
-text_features, ids = pickle.load(open("models/test_text_features.pkl", 'rb'))
+# for i in range(1,3+1):
 
-metrics1 = compute_metrics(img_features, text_features, metric='cosine', recall_klist=(1, 5, 10), return_raw=False)
-metrics2 = compute_metrics(text_features, img_features, metric='cosine', recall_klist=(1, 5, 10), return_raw=False)
+#     img_features, ids = pickle.load(open(f"models/test_img_features_{i}.pkl", 'rb'))
+#     text_features, ids = pickle.load(open(f"models/test_text_features_{i}.pkl", 'rb'))
 
-print(len(ids))
+#     metrics1 = compute_metrics(img_features, text_features, metric='cosine', recall_klist=(1, 5, 10), return_raw=False)
+#     # metrics2 = compute_metrics(text_features, img_features, metric='cosine', recall_klist=(1, 5, 10), return_raw=False)
+#     print(metrics1)
+#     # print(metrics2)
 
+# print(len(img_features))
+
+img_features, ids = pickle.load(open(f"models/test_img_features_3.pkl", 'rb'))
+text_features, ids = pickle.load(open(f"models/test_text_features_3.pkl", 'rb'))
+
+metrics1 = compute_metrics(img_features, text_features, ids, metric='cosine', recall_klist=(1, 5, 10), return_raw=False)
+# metrics2 = compute_metrics(text_features, img_features, metric='cosine', recall_klist=(1, 5, 10), return_raw=False)
+print(metrics1['recall_1']*len(img_features))
 print(metrics1)
-print(metrics2)

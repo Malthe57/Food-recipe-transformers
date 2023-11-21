@@ -43,7 +43,8 @@ def prepare_dataloaders(batch_size, pretrained=False, image_size=(64,64)):
     transform = transforms.Compose([transforms.Resize(image_size),transforms.ToTensor(),
                                     transforms.Normalize((0.485, 0.456, 0.406),
                                                 (0.229, 0.224, 0.225))])
-
+    
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     if pretrained:
         VocabImage = FoodRecipeDataset(text_path, images_path, transform=transform)
     else:
@@ -68,14 +69,14 @@ def prepare_dataloaders(batch_size, pretrained=False, image_size=(64,64)):
 
     return trainloader, valloader, testloader, training_data, val_data, test_data
 
-def dump_pickles(features1, features2, ids):
-    with open("models/test_img_features.pkl", 'wb') as f:
+def dump_pickles(features1, features2, ids, pkl_file_1="models/test_img_features.pkl", pkl_file_2="models/test_text_features.pkl"):
+    with open(pkl_file_1, 'wb') as f:
         pickle.dump((features1, ids), f)
-    with open("models/test_text_features.pkl", 'wb') as f:
+    with open(pkl_file_2, 'wb') as f:
         pickle.dump((features2, ids), f)
 
 
-def inference(model_path="models/best_model_ever.pt", pretrained=False):
+def inference(model_path="models/best_model_ever.pt", pkl_file_1="models/test_img_features.pkl", pkl_file_2="models/test_img_features.pkl", pretrained=False):
 
     model = torch.load(model_path)
     model.eval()
@@ -94,14 +95,15 @@ def inference(model_path="models/best_model_ever.pt", pretrained=False):
                 else:
                     image, title, ingredients, instructions, cleaned_ingredients = image.to('cuda'), title.to('cuda'), ingredients.to('cuda'), instructions.to('cuda'), cleaned_ingredients.to('cuda')
 
-        ids.append(id)
+        ids.append(id.item())
         image_features, text_features = model(image, title, ingredients, instructions)
 
         test_img_features.append(image_features.detach().cpu().numpy()[0])
         test_text_features.append(text_features.detach().cpu().numpy()[0])
 
 
-    dump_pickles(features1=np.asarray(test_img_features), features2=np.asarray(test_text_features), ids=ids)
+    dump_pickles(features1=np.asarray(test_img_features), features2=np.asarray(test_text_features), ids=np.array(ids), pkl_file_1=pkl_file_1, pkl_file_2=pkl_file_2)
 
 if __name__ == "__main__":
-    inference(pretrained=True)
+    for i in range(1,3+1):
+        inference(pretrained=True, model_path=f"models/best_model_ever_{i}.pt", pkl_file_1=f"models/test_img_features_{i}.pkl", pkl_file_2=f"models/test_text_features_{i}.pkl")
