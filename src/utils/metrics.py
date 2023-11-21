@@ -64,6 +64,8 @@ def compute_metrics(queries, database, ids, metric='cosine',
     # in a perfect world, the closest distance would be the same as the index
     match_idx, _ = np.nonzero(rankings[:,0][:,None] == np.arange(0, len(ids))[:,None])
 
+    ids = np.array(ids)
+
     dataloader_match_idx = ids[match_idx]
 
     
