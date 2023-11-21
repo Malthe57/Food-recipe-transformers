@@ -11,7 +11,7 @@ from sklearn.metrics import pairwise_distances
 
 
 def compute_metrics(queries, database, ids, metric='cosine',
-                    recall_klist=(1, 5, 10), return_raw=False):
+                    recall_klist=(1, 5, 10), return_raw=False, return_idx=False):
     """Function to compute Median Rank and Recall@k metrics given two sets of
        aligned embeddings.
 
@@ -75,8 +75,9 @@ def compute_metrics(queries, database, ids, metric='cosine',
 
     metrics = {}
     metrics['medr'] = np.median(positions)
-    metrics['idx'] = dataloader_match_idx
-    metrics['pred_idx'] = ids[rankings[:,0]]
+    if return_idx:
+        metrics['idx'] = dataloader_match_idx
+        metrics['pred_idx'] = ids[rankings[:,0]]
 
     for index in recall_klist:
         metrics[f'recall_{int(index)}'] = recall_values[int(index)-1]

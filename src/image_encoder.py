@@ -202,11 +202,12 @@ class ResNetBackbone(nn.Module):
 
         self.fc = nn.Linear(in_feats, embed_dim)
 
-    def forward(self, images, freeze_backbone=True):
+    def forward(self, images, unfreeze=False):
         """Extract feature vectors from input images."""
-        if not freeze_backbone:
+        if unfreeze:
             feats = self.backbone(images)
         else:
+            print("Freezing ResNet weights")
             with torch.no_grad():
                 feats = self.backbone(images)
         feats = feats.view(feats.size(0), feats.size(1),

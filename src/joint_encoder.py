@@ -12,7 +12,7 @@ import os
 from torchtext.data.utils import get_tokenizer
 
 class JointEmbedding(nn.Module):
-    def __init__(self, image_encoder, title_encoder, ingredients_encoder, instructions_encoder, embed_dim=128, mode=1, pretrained=False):
+    def __init__(self, image_encoder, title_encoder, ingredients_encoder, instructions_encoder, embed_dim=128, mode=1, pretrained=False, unfreeze=False):
 
         #mode: Determines which text data to use
         #1: only title
@@ -22,6 +22,7 @@ class JointEmbedding(nn.Module):
         self.mode = mode
         self.pretrained = pretrained
         self.image_encoder = image_encoder
+        self.unfreeze = unfreeze
         if mode == 1:
             print("Training only on image and title")
             self.title_encoder = title_encoder
@@ -50,18 +51,18 @@ class JointEmbedding(nn.Module):
     def forward(self, img, title, ingredients, instructions):
 
         if self.mode == 1:
-            img_feat = self.img_linear(self.image_encoder(img))
+            img_feat = self.img_linear(self.image_encoder(img, unfreeze=self.unfreeze))
             text_features = self.text_linear(self.title_encoder(title))
 
         elif self.mode == 2:
-            img_feat = self.img_linear(self.image_encoder(img))
+            img_feat = self.img_linear(self.image_encoder(img, unfreeze=self.unfreeze))
 
             title_feat = self.title_encoder(title)
             ingredients_feat = self.ingredients_encoder(ingredients)
 
             text_features = self.text_linear(torch.cat([title_feat, ingredients_feat], dim=1))
         elif self.mode == 3:
-            img_feat = self.img_linear(self.image_encoder(img))
+            img_feat = self.img_linear(self.image_encoder(img, unfreeze=self.unfreeze))
 
             title_feat = self.title_encoder(title)
             ingredients_feat = self.ingredients_encoder(ingredients)

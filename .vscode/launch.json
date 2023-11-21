@@ -13,7 +13,8 @@
             "justMyCode": true, 
             "args": ["--image_size", "224",
                      "--mode", "2",
-                     "--pretrained"
+                     "--pretrained",
+                     "--unfreeze"
                      ]
         }
     ]

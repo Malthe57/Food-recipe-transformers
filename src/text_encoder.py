@@ -138,19 +138,22 @@ class PositionalEmbedding(nn.Module):
 
 class TextEncoder(nn.Module):
     def __init__(self, embed_dim, num_heads, num_layers, max_seq_len, dropout=0.0, 
-                fc_dim=None, num_tokens=50_000, pool='mean', pos_enc='learnable', pretrained = False
+                fc_dim=None, num_tokens=50_000, pool='mean', pos_enc='learnable', pretrained = False, unfreeze = False
     ):
         super().__init__()
 
         self.pretrained = pretrained
-        self.device =  torch.device('cuda' if torch.cuda.is_available() else 'cpu')  
+        self.device =  torch.device('cuda' if torch.cuda.is_available() else 'cpu') 
+        self.unfreeze = unfreeze
         if pretrained == True:
             print("Using pretrained BERT encoder")
             self.tokenizer = AutoTokenizer.from_pretrained("bert-base-cased")
             self.model = BertModel.from_pretrained("bert-base-uncased")
 
-            for param in self.model.parameters():
-                param.requires_grad = False
+            if not self.unfreeze:
+                print("Freezing BERT weights")
+                for param in self.model.parameters():
+                    param.requires_grad = False
 
         else:
             assert pool in ['mean', 'max']
