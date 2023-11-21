@@ -151,7 +151,7 @@ class TextEncoder(nn.Module):
             self.model = BertModel.from_pretrained("bert-base-uncased")
 
             if not self.unfreeze:
-                print("Freezing BERT weights")
+                # print("Freezing BERT weights")
                 for param in self.model.parameters():
                     param.requires_grad = False
 

@@ -207,7 +207,7 @@ class ResNetBackbone(nn.Module):
         if unfreeze:
             feats = self.backbone(images)
         else:
-            print("Freezing ResNet weights")
+            # print("Freezing ResNet weights")
             with torch.no_grad():
                 feats = self.backbone(images)
         feats = feats.view(feats.size(0), feats.size(1),
