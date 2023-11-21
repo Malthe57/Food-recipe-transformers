@@ -34,7 +34,7 @@ def set_seed(seed=1):
     torch.backends.cudnn.deterministic = True
 
 
-def prepare_dataloaders(batch_size, pretrained=False, image_size=(224,224)):
+def prepare_dataloaders(batch_size, pretrained=False, image_size=(224,224), augment=False):
     
     current_working_directory = os.getcwd()
     images_path = os.path.join(current_working_directory, "src/dataset/Food Images")
@@ -46,7 +46,10 @@ def prepare_dataloaders(batch_size, pretrained=False, image_size=(224,224)):
                                                 (0.229, 0.224, 0.225))])
 
     if pretrained:
-        VocabImage = FoodRecipeDataset(text_path, images_path, transform=transform)
+        if augment:
+            VocabImage = FoodRecipeDataset(text_path, images_path, transform=None)
+        else:
+            VocabImage = FoodRecipeDataset(text_path, images_path, transform=transform)
     else:
         VocabImage = VocabImageDataset(annotations_file=text_path, img_dir=images_path, vocab=vocab, tokenizer=tokenizer, device=device, transform=transform)
     
@@ -56,10 +59,11 @@ def prepare_dataloaders(batch_size, pretrained=False, image_size=(224,224)):
     generator = torch.Generator().manual_seed(42)
     training_data, temp = random_split(VocabImage, [training_size, test_size], generator)
     test_data, val_data = random_split(temp, [int(0.4*len(temp)), int(0.6*len(temp))], generator)
-
-    training_data = ApplyTransforms(training_data, split='train')
-    val_data = ApplyTransforms(val_data, split='val')
-    test_data = ApplyTransforms(test_data, split='test')
+    
+    if augment:
+        training_data = ApplyTransforms(training_data, split='train')
+        val_data = ApplyTransforms(val_data, split='val')
+        test_data = ApplyTransforms(test_data, split='test')
 
     if pretrained:
         trainloader = DataLoader(training_data, batch_size=batch_size, shuffle=True)
@@ -79,15 +83,14 @@ def main(image_size=(64,64), patch_size=(8,8), channels=3,
          pool='cls', dropout=0.3, fc_dim=None, 
          num_epochs=20, batch_size=32, lr=3e-4, warmup_steps=625,
          weight_decay=1e-3, gradient_clipping=1, model_name = "../../models/best_model_ever.pt", mode = 1, pretrained=False,
-         unfreeze=False
-         
+         unfreeze=False, augment=False
     ):
 
     writer = SummaryWriter()
 
     loss_function = TripletLoss()
 
-    trainloader, valloader, _, _, _, _ = prepare_dataloaders(batch_size=batch_size, pretrained=pretrained, image_size=image_size)
+    trainloader, valloader, _, _, _, _ = prepare_dataloaders(batch_size=batch_size, pretrained=pretrained, image_size=image_size, augment=augment)
 
     if pretrained:
         image_encoder = ResNetBackbone(embed_dim=embed_dim)
@@ -210,13 +213,12 @@ if __name__ == "__main__":
     parser.add_argument('--mode', default=1, type=int, help="Integer, 1 for title only, 2 for title+ingredients, 3 for all") 
     parser.add_argument('--pretrained', default=False, action='store_true')
     parser.add_argument('--unfreeze', default=False, action='store_true')
+    parser.add_argument('--augment', default=False, action='store_true')
 
     args = parser.parse_args()
 
-    print("unfreeze:", args.unfreeze)
-
     model = main(image_size=(args.image_size, args.image_size), patch_size=(args.patch_size, args.patch_size), 
                  model_name=args.model_name, lr=args.lr, num_epochs=args.num_epochs, mode=args.mode, 
-                 pretrained=args.pretrained, unfreeze=args.unfreeze)
+                 pretrained=args.pretrained, unfreeze=args.unfreeze, augment=args.augment)
 
 
