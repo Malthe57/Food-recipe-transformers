@@ -64,7 +64,7 @@ def compute_metrics(queries, database, ids, metric='cosine',
     # in a perfect world, the closest distance would be the same as the index
     match_idx, _ = np.nonzero(rankings[:,0][:,None] == np.arange(0, len(ids))[:,None])
 
-    dataloader_match_idx = np.array(ids)[match_idx]
+    dataloader_match_idx = ids[match_idx]
 
     
     cum_matches_topk = np.cumsum(rankings == positive_idxs[:, None],
@@ -76,6 +76,7 @@ def compute_metrics(queries, database, ids, metric='cosine',
     metrics = {}
     metrics['medr'] = np.median(positions)
     metrics['idx'] = dataloader_match_idx
+    metrics['pred_idx'] = ids[rankings[:,0]]
 
     for index in recall_klist:
         metrics[f'recall_{int(index)}'] = recall_values[int(index)-1]

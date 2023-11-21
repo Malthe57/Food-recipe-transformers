@@ -80,7 +80,7 @@ def main(image_size=(64,64), patch_size=(8,8), channels=3,
 
     writer = SummaryWriter()
 
-    loss_function = TripletLoss(margin=0.1)
+    loss_function = TripletLoss()
 
     trainloader, valloader, _, _, _, _ = prepare_dataloaders(batch_size=batch_size, pretrained=pretrained, image_size=image_size)
 
