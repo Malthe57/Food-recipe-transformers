@@ -19,7 +19,7 @@ sys.path.append("../Food-recipe-transformers/src/")
 from utils.loss import TripletLoss
 
 from VocabImagedataset_class import VocabImageDataset, pad_input, collate_batch
-from dataset_class import FoodRecipeDataset
+from dataset_class import FoodRecipeDataset, ApplyTransforms
 from image_encoder import ImageEncoder, ResNetBackbone
 from text_encoder import TextEncoder
 from joint_encoder import JointEmbedding
@@ -57,6 +57,10 @@ def prepare_dataloaders(batch_size, pretrained=False, image_size=(224,224)):
     training_data, temp = random_split(VocabImage, [training_size, test_size], generator)
     test_data, val_data = random_split(temp, [int(0.4*len(temp)), int(0.6*len(temp))], generator)
 
+    training_data = ApplyTransforms(training_data, split='train')
+    val_data = ApplyTransforms(val_data, split='val')
+    test_data = ApplyTransforms(test_data, split='test')
+
     if pretrained:
         trainloader = DataLoader(training_data, batch_size=batch_size, shuffle=True)
         valloader = DataLoader(val_data, batch_size=batch_size, shuffle=False)
@@ -75,7 +79,7 @@ def main(image_size=(64,64), patch_size=(8,8), channels=3,
          pool='cls', dropout=0.3, fc_dim=None, 
          num_epochs=20, batch_size=32, lr=3e-4, warmup_steps=625,
          weight_decay=1e-3, gradient_clipping=1, model_name = "../../models/best_model_ever.pt", mode = 1, pretrained=False,
-         unfreeze=True
+         unfreeze=False
          
     ):
 

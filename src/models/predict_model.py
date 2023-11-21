@@ -19,7 +19,7 @@ sys.path.append("../Food-recipe-transformers/src/")
 from utils.loss import TripletLoss
 
 from VocabImagedataset_class import VocabImageDataset, pad_input, collate_batch
-from dataset_class import FoodRecipeDataset
+from dataset_class import FoodRecipeDataset, ApplyTransforms
 from image_encoder import ImageEncoder
 from text_encoder import TextEncoder
 from joint_encoder import JointEmbedding
@@ -56,6 +56,10 @@ def prepare_dataloaders(batch_size, pretrained=False, image_size=(64,64)):
     generator = torch.Generator().manual_seed(42)
     training_data, temp = random_split(VocabImage, [training_size, test_size], generator)
     test_data, val_data = random_split(temp, [int(0.4*len(temp)), int(0.6*len(temp))], generator)
+
+    training_data = ApplyTransforms(training_data, split='train')
+    val_data = ApplyTransforms(val_data, split='val')
+    test_data = ApplyTransforms(test_data, split='test')
 
     if pretrained:
         trainloader = DataLoader(training_data, batch_size=batch_size, shuffle=True)
