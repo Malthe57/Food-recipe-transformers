@@ -150,7 +150,7 @@ class ImageEncoder(nn.Module):
         self.dropout = nn.Dropout(dropout)
 
 
-    def forward(self, img):
+    def forward(self, img, unfreeze=False):
 
         tokens = self.to_patch_embedding(img)
         batch_size, num_patches, embed_dim = tokens.size()

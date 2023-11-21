@@ -12,10 +12,7 @@
             "console": "integratedTerminal",
             "justMyCode": true, 
             "args": ["--image_size", "224",
-                     "--mode", "2",
-                     "--pretrained",
-                     "--unfreeze",
-                     "--augment"
+                     "--mode", "3",
                      ]
         }
     ]

@@ -45,7 +45,7 @@ class JointEmbedding(nn.Module):
             self.text_linear = nn.Linear(6*embed_dim*scale_factor, embed_dim)
             self.img_linear = nn.Linear(embed_dim, embed_dim)
         else:
-            self.text_linear = nn.Linear(6*embed_dim*scale_factor, embed_dim)
+            self.text_linear = nn.Linear(embed_dim*scale_factor, embed_dim)
             self.img_linear = nn.Linear(embed_dim, embed_dim)
 
     def forward(self, img, title, ingredients, instructions):
