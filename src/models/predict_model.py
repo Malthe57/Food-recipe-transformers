@@ -33,7 +33,7 @@ def set_seed(seed=1):
     torch.backends.cudnn.deterministic = True
 
 
-def prepare_dataloaders(batch_size, pretrained=False, image_size=(64,64)):
+def prepare_dataloaders(batch_size, pretrained=False, image_size=(224,224), augment=False):
     
     current_working_directory = os.getcwd()
     images_path = os.path.join(current_working_directory, "src/dataset/Food Images")
@@ -43,10 +43,12 @@ def prepare_dataloaders(batch_size, pretrained=False, image_size=(64,64)):
     transform = transforms.Compose([transforms.Resize(image_size),transforms.ToTensor(),
                                     transforms.Normalize((0.485, 0.456, 0.406),
                                                 (0.229, 0.224, 0.225))])
-    
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
     if pretrained:
-        VocabImage = FoodRecipeDataset(text_path, images_path, transform=transform)
+        if augment:
+            VocabImage = FoodRecipeDataset(text_path, images_path, transform=None)
+        else:
+            VocabImage = FoodRecipeDataset(text_path, images_path, transform=transform)
     else:
         VocabImage = VocabImageDataset(annotations_file=text_path, img_dir=images_path, vocab=vocab, tokenizer=tokenizer, device=device, transform=transform)
     
@@ -56,10 +58,11 @@ def prepare_dataloaders(batch_size, pretrained=False, image_size=(64,64)):
     generator = torch.Generator().manual_seed(42)
     training_data, temp = random_split(VocabImage, [training_size, test_size], generator)
     test_data, val_data = random_split(temp, [int(0.4*len(temp)), int(0.6*len(temp))], generator)
-
-    training_data = ApplyTransforms(training_data, split='train')
-    val_data = ApplyTransforms(val_data, split='val')
-    test_data = ApplyTransforms(test_data, split='test')
+    
+    if augment:
+        training_data = ApplyTransforms(training_data, split='train')
+        val_data = ApplyTransforms(val_data, split='val')
+        test_data = ApplyTransforms(test_data, split='test')
 
     if pretrained:
         trainloader = DataLoader(training_data, batch_size=batch_size, shuffle=True)
@@ -80,12 +83,12 @@ def dump_pickles(features1, features2, ids, pkl_file_1="models/test_img_features
         pickle.dump((features2, ids), f)
 
 
-def inference(model_path="models/best_model_ever.pt", pkl_file_1="models/test_img_features.pkl", pkl_file_2="models/test_img_features.pkl", pretrained=False):
+def inference(model_path="models/best_model_ever.pt", pkl_file_1="models/test_img_features.pkl", pkl_file_2="models/test_img_features.pkl", pretrained=False, augment=False):
 
     model = torch.load(model_path)
     model.eval()
 
-    _, _, testloader, _, _, _ = prepare_dataloaders(batch_size=1, pretrained=True, image_size=(224,224))
+    _, _, testloader, _, _, _ = prepare_dataloaders(batch_size=1, pretrained=True, image_size=(224,224), augment=augment)
 
 
     test_img_features = []
@@ -109,5 +112,13 @@ def inference(model_path="models/best_model_ever.pt", pkl_file_1="models/test_im
     dump_pickles(features1=np.asarray(test_img_features), features2=np.asarray(test_text_features), ids=np.array(ids), pkl_file_1=pkl_file_1, pkl_file_2=pkl_file_2)
 
 if __name__ == "__main__":
-    for i in range(1,3+1):
-        inference(pretrained=True, model_path=f"models/best_model_ever_{i}.pt", pkl_file_1=f"models/test_img_features_{i}.pkl", pkl_file_2=f"models/test_text_features_{i}.pkl")
+    models = os.listdir("models/")
+    augment = False
+    for model in models:
+        if model.endswith(".pt"):
+            print("evaluating:", model)
+            name = model.split("_")[-1].split(".")[0]
+            if name not in ["1", "2", "3"]:
+                augment = True
+            inference(pretrained=True, model_path=f"models/{model}", pkl_file_1=f"models/features/test_img_features_{name}.pkl", pkl_file_2=f"models/features/test_text_features_{name}.pkl", augment=augment)
+        # inference(pretrained=True, model_path=f"models/best_model_ever_{i}.pt", pkl_file_1=f"models/test_img_features_{i}.pkl", pkl_file_2=f"models/test_text_features_{i}.pkl")

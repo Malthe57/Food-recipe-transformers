@@ -2,6 +2,7 @@
 *.xml
 *.npz
 dataset/
+models/
 food/
 runs/
 *.pyc

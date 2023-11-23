@@ -83,12 +83,12 @@ def main(image_size=(64,64), patch_size=(8,8), channels=3,
          pool='cls', dropout=0.3, fc_dim=None, 
          num_epochs=20, batch_size=32, lr=3e-4, warmup_steps=625,
          weight_decay=1e-3, gradient_clipping=1, model_name = "../../models/best_model_ever.pt", mode = 1, pretrained=False,
-         unfreeze=False, augment=False
+         unfreeze=False, augment=False, margin=0.3
     ):
 
     writer = SummaryWriter()
 
-    loss_function = TripletLoss()
+    loss_function = TripletLoss(margin=margin)
 
     trainloader, valloader, _, _, _, _ = prepare_dataloaders(batch_size=batch_size, pretrained=pretrained, image_size=image_size, augment=augment)
 
@@ -214,11 +214,16 @@ if __name__ == "__main__":
     parser.add_argument('--pretrained', default=False, action='store_true')
     parser.add_argument('--unfreeze', default=False, action='store_true')
     parser.add_argument('--augment', default=False, action='store_true')
+    parser.add_argument('--margin', type=float, default=0.3, help='margin for triplet loss')
+    parser.add_argument('--verbose', default=False, action='store_true')
 
     args = parser.parse_args()
 
+    if args.verbose:
+        print(args)
+
     model = main(image_size=(args.image_size, args.image_size), patch_size=(args.patch_size, args.patch_size), 
                  model_name=args.model_name, lr=args.lr, num_epochs=args.num_epochs, mode=args.mode, 
-                 pretrained=args.pretrained, unfreeze=args.unfreeze, augment=args.augment)
+                 pretrained=args.pretrained, unfreeze=args.unfreeze, augment=args.augment, margin=args.margin)
 
 

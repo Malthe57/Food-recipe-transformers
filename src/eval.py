@@ -13,8 +13,8 @@ import pickle
 
 # print(len(img_features))
 
-img_features, ids = pickle.load(open(f"models/test_img_features_clip.pkl", 'rb'))
-text_features, ids = pickle.load(open(f"models/test_text_features_clip.pkl", 'rb'))
+img_features, ids = pickle.load(open(f"models/features/test_img_features_augment.pkl", 'rb'))
+text_features, ids = pickle.load(open(f"models/features/test_text_features_augment.pkl", 'rb'))
 
 metrics1 = compute_metrics(img_features, text_features, ids, metric='cosine', recall_klist=(1, 5, 10), return_raw=False, return_idx=False)
 metrics2 = compute_metrics(text_features, img_features, ids, metric='cosine', recall_klist=(1, 5, 10), return_raw=False, return_idx=False)

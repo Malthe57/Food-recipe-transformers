@@ -147,7 +147,7 @@ class TextEncoder(nn.Module):
         self.unfreeze = unfreeze
         if pretrained == True:
             print("Using pretrained BERT encoder")
-            self.tokenizer = AutoTokenizer.from_pretrained("bert-base-cased")
+            self.tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
             self.model = BertModel.from_pretrained("bert-base-uncased")
 
             if not self.unfreeze:
