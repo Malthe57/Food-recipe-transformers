@@ -120,5 +120,6 @@ if __name__ == "__main__":
             name = model.split("_")[-1].split(".")[0]
             if name not in ["1", "2", "3"]:
                 augment = True
+            # print(augment)
             inference(pretrained=True, model_path=f"models/{model}", pkl_file_1=f"models/features/test_img_features_{name}.pkl", pkl_file_2=f"models/features/test_text_features_{name}.pkl", augment=augment)
         # inference(pretrained=True, model_path=f"models/best_model_ever_{i}.pt", pkl_file_1=f"models/test_img_features_{i}.pkl", pkl_file_2=f"models/test_text_features_{i}.pkl")

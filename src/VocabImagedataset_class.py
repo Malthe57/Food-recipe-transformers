@@ -36,11 +36,14 @@ class VocabImageDataset(FoodRecipeDataset):
         instructions = torch.tensor(self.text_pipeline(instructions_seq))[:self.max_seq_len]
         cleaned_ingredients = torch.tensor(self.text_pipeline(cleaned_ingredients_seq))[:self.max_seq_len]
         
-        output_dict = {'image': self.transform(rgb_im).to(self.device), 'title': title.to(self.device), 'ingredients': ingredients.to(self.device),
-                       'instructions': instructions.to(self.device), 'cleaned_ingredients': cleaned_ingredients.to(self.device)}
+        # output_dict = {'image': self.transform(rgb_im).to(self.device), 'title': title.to(self.device), 'ingredients': ingredients.to(self.device),
+        #                'instructions': instructions.to(self.device), 'cleaned_ingredients': cleaned_ingredients.to(self.device)}
         
 #         return output_dict
-        return self.transform(rgb_im).to(self.device), title.to(self.device), ingredients.to(self.device), instructions.to(self.device), cleaned_ingredients.to(self.device), idx
+        if self.transform is None:
+            return rgb_im, title.to(self.device), ingredients.to(self.device), instructions.to(self.device), cleaned_ingredients.to(self.device), idx
+        else:
+            return self.transform(rgb_im).to(self.device), title.to(self.device), ingredients.to(self.device), instructions.to(self.device), cleaned_ingredients.to(self.device), idx
 
 def pad_input(input,):
     """

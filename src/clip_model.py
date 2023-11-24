@@ -42,7 +42,7 @@ def dump_pickles(features1, features2, ids, pkl_file_1="models/test_img_features
     with open(pkl_file_2, 'wb') as f:
         pickle.dump((features2, ids), f)
 
-def inference(pkl_file_1="models/test_img_features.pkl", pkl_file_2="models/test_img_features.pkl"):
+def inference(pkl_file_1="models/features/test_img_features.pkl", pkl_file_2="models/features/test_img_features.pkl"):
 
     testloader = DataLoader(test_data, batch_size=1, shuffle=False, collate_fn=collate_clip)
 
@@ -72,4 +72,4 @@ def inference(pkl_file_1="models/test_img_features.pkl", pkl_file_2="models/test
             dump_pickles(features1=np.asarray(test_img_features), features2=np.asarray(test_text_features), ids=np.array(ids), pkl_file_1=pkl_file_1, pkl_file_2=pkl_file_2)
 
 if __name__ == "__main__":
-    inference(pkl_file_1=f"models/test_img_features_clip.pkl", pkl_file_2=f"models/test_text_features_clip.pkl")
+    inference(pkl_file_1=f"models/features/test_img_features_clip.pkl", pkl_file_2=f"models/features/test_text_features_clip.pkl")

@@ -51,7 +51,10 @@ def prepare_dataloaders(batch_size, pretrained=False, image_size=(224,224), augm
         else:
             VocabImage = FoodRecipeDataset(text_path, images_path, transform=transform)
     else:
-        VocabImage = VocabImageDataset(annotations_file=text_path, img_dir=images_path, vocab=vocab, tokenizer=tokenizer, device=device, transform=transform)
+        if augment:
+            VocabImage = VocabImageDataset(annotations_file=text_path, img_dir=images_path, vocab=vocab, tokenizer=tokenizer, device=device, transform=None)
+        else:
+            VocabImage = VocabImageDataset(annotations_file=text_path, img_dir=images_path, vocab=vocab, tokenizer=tokenizer, device=device, transform=transform)
     
     training_share = 0.8 #Proportion of data that is alotted to the training set
     training_size = int(training_share*len(VocabImage))

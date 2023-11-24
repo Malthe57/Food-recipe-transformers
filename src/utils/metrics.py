@@ -82,7 +82,7 @@ def compute_metrics(queries, database, ids, metric='cosine',
         metrics['pred_idx'] = ids[rankings[:,0]]
 
     for index in recall_klist:
-        metrics[f'recall_{int(index)}'] = recall_values[int(index)-1]
+        metrics[f'recall_{int(index)}'] = recall_values[int(index)-1]*100
 
     if return_raw:
         return metrics, {'medr': positions, 'recall': cum_matches_topk}
