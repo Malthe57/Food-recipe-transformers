@@ -2,6 +2,7 @@
 *.xml
 *.npz
 dataset/
+notebooks/tensorboard
 models/
 food/
 runs/

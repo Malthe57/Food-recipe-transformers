@@ -44,13 +44,18 @@ def prepare_dataloaders(batch_size, pretrained=False, image_size=(224,224), augm
                                     transforms.Normalize((0.485, 0.456, 0.406),
                                                 (0.229, 0.224, 0.225))])
 
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')  
+
     if pretrained:
         if augment:
             VocabImage = FoodRecipeDataset(text_path, images_path, transform=None)
         else:
             VocabImage = FoodRecipeDataset(text_path, images_path, transform=transform)
     else:
-        VocabImage = VocabImageDataset(annotations_file=text_path, img_dir=images_path, vocab=vocab, tokenizer=tokenizer, device=device, transform=transform)
+        if augment:
+            VocabImage = VocabImageDataset(annotations_file=text_path, img_dir=images_path, vocab=vocab, tokenizer=tokenizer, device=device, transform=None)
+        else:
+            VocabImage = VocabImageDataset(annotations_file=text_path, img_dir=images_path, vocab=vocab, tokenizer=tokenizer, device=device, transform=transform)
     
     training_share = 0.8 #Proportion of data that is alotted to the training set
     training_size = int(training_share*len(VocabImage))
@@ -70,11 +75,14 @@ def prepare_dataloaders(batch_size, pretrained=False, image_size=(224,224), augm
         testloader = DataLoader(test_data, batch_size=batch_size, shuffle=False)
         
     else:
+        print("honning")
         trainloader = DataLoader(training_data, batch_size=batch_size, shuffle=True, collate_fn=collate_batch)
         valloader = DataLoader(val_data, batch_size=batch_size, shuffle=False, collate_fn=collate_batch)
         testloader = DataLoader(test_data, batch_size=batch_size, shuffle=False, collate_fn=collate_batch)
 
     return trainloader, valloader, testloader, training_data, val_data, test_data
+    
+
 
 def dump_pickles(features1, features2, ids, pkl_file_1="models/test_img_features.pkl", pkl_file_2="models/test_text_features.pkl"):
     with open(pkl_file_1, 'wb') as f:
@@ -88,7 +96,7 @@ def inference(model_path="models/best_model_ever.pt", pkl_file_1="models/test_im
     model = torch.load(model_path)
     model.eval()
 
-    _, _, testloader, _, _, _ = prepare_dataloaders(batch_size=1, pretrained=True, image_size=(224,224), augment=augment)
+    _, _, testloader, _, _, _ = prepare_dataloaders(batch_size=1, pretrained=pretrained, image_size=(224,224), augment=augment)
 
 
     test_img_features = []
@@ -121,5 +129,5 @@ if __name__ == "__main__":
             if name not in ["1", "2", "3"]:
                 augment = True
             # print(augment)
-            inference(pretrained=True, model_path=f"models/{model}", pkl_file_1=f"models/features/test_img_features_{name}.pkl", pkl_file_2=f"models/features/test_text_features_{name}.pkl", augment=augment)
+            inference(pretrained=False, model_path=f"models/{model}", pkl_file_1=f"models/features/test_img_features_{name}.pkl", pkl_file_2=f"models/features/test_text_features_{name}.pkl", augment=augment)
         # inference(pretrained=True, model_path=f"models/best_model_ever_{i}.pt", pkl_file_1=f"models/test_img_features_{i}.pkl", pkl_file_2=f"models/test_text_features_{i}.pkl")

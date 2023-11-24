@@ -5,6 +5,7 @@ import os
 import sys
 sys.path.append('../src/')
 from dataset_class import FoodRecipeDataset
+import numpy as np
 
 
 class VocabImageDataset(FoodRecipeDataset):
@@ -89,7 +90,7 @@ def collate_batch(batch):
     instructions_tensor = pad_input(instructions)
     cleaned_ingredients_tensor = pad_input(cleaned_ingredients)
     
-    return image_tensor, title_tensor, ingredients_tensor, instructions_tensor, cleaned_ingredients_tensor, id[0] # get id of tuple
+    return image_tensor, title_tensor, ingredients_tensor, instructions_tensor, cleaned_ingredients_tensor, np.array(id) # get id of tuple
     
     
     
