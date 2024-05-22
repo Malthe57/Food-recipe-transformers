@@ -10,8 +10,8 @@ for i in range(offset):
     img_features, ids = pickle.load(open(f"models/features/{features[i]}", 'rb'))
     text_features, ids = pickle.load(open(f"models/features/{features[i+offset]}", 'rb'))
 
-    img2text = compute_metrics(queries=img_features, database=text_features, ids=ids, metric='cosine', recall_klist=(1, 5, 10), return_raw=False, return_idx=False)
-    text2img = compute_metrics(queries=text_features, database=img_features, ids=ids, metric='cosine', recall_klist=(1, 5, 10), return_raw=False, return_idx=False)
+    img2text = compute_metrics(queries=img_features, database=text_features, ids=ids, metric='cosine', recall_klist=(1, 5, 10), return_raw=False, return_idx=True)
+    text2img = compute_metrics(queries=text_features, database=img_features, ids=ids, metric='cosine', recall_klist=(1, 5, 10), return_raw=False, return_idx=True)
     
     print("Number of correct recall @ 1:", img2text['recall_1']*0.01*len(img_features))
     print(img2text)
