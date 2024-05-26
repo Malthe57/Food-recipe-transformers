@@ -5,7 +5,13 @@ Repository for image-to-recipe retrieval project for the DTU Course Advanced Dee
 ![alttext](reports/figures/architecture.png)
 
 # Getting started
-Create an environment and install the dependencies.
+Create an environment with ``Python 3.10`` and install the dependencies.
 ```
 pip install -r requirements.txt
+```
+# Train your own model
+
+
+```
+python src/models/train_model.py --image_size 224 --model_name "models/best_model_ever_1.pt" --mode 1 --pretrained
 ```

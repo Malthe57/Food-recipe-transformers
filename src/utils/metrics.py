@@ -80,6 +80,8 @@ def compute_metrics(queries, database, ids, metric='cosine',
     if return_idx:
         metrics['idx'] = dataloader_match_idx
         metrics['pred_idx'] = ids[rankings[:,0]]
+        metrics['top5_pred_idx'] = ids[rankings[:,:5]]
+
 
     for index in recall_klist:
         metrics[f'recall_{int(index)}'] = recall_values[int(index)-1]*100

@@ -50,165 +50,266 @@ def prepare_dataloaders(batch_size, pretrained=False, image_size=(64,64)):
 
     return trainloader, valloader, testloader, training_data, val_data, test_data, VocabImage
 
-_, _, _, _, _, test_data, VocabImage = prepare_dataloaders(batch_size=1, pretrained=True, image_size=(224,224))
+def plot_examples(metrics_img2text, metrics_text2img, VocabImage, ids):
 
-img_features, ids = pickle.load(open(f"models/features/test_img_features_lr3.pkl", 'rb'))
-text_features, ids = pickle.load(open(f"models/features/test_text_features_lr3.pkl", 'rb'))
+    n_images = 4
+    fig, ax = plt.subplots(n_images,3, figsize=(10,10))
+    fig.subplots_adjust(hspace=0.2, wspace=0.1)
+    i=1
+    for (idx, pred_idx) in zip(ids,metrics_img2text['pred_idx']):
 
-metrics_img2text = compute_metrics(img_features, text_features, ids, metric='cosine', recall_klist=(1, 5, 10), return_raw=False, return_idx=True)
-metrics_text2img = compute_metrics(text_features, img_features, ids, metric='cosine', recall_klist=(1, 5, 10), return_raw=False, return_idx=True)
+        if rand(1) < 0.95:
+            None
+        else:
 
+            input = VocabImage[idx]
+            pred = VocabImage[pred_idx]
 
+            image = input[0]
+            invTrans = transforms.Compose([ transforms.Normalize(mean = [ 0., 0., 0. ],
+                                                            std = [ 1/0.229, 1/0.224, 1/0.225 ]),
+                                        transforms.Normalize(mean = [ -0.485, -0.456, -0.406 ],
+                                                            std = [ 1., 1., 1. ]),
+                                    ])
 
-n_images = 4
-fig, ax = plt.subplots(n_images,3, figsize=(10,10))
-fig.subplots_adjust(hspace=0.2, wspace=0.1)
-i=1
-for (idx, pred_idx) in zip(ids,metrics_img2text['pred_idx']):
-
-    if rand(1) < 0.95:
-        None
-    else:
-
-        input = VocabImage[idx]
-        pred = VocabImage[pred_idx]
-
-        image = input[0]
-        invTrans = transforms.Compose([ transforms.Normalize(mean = [ 0., 0., 0. ],
-                                                        std = [ 1/0.229, 1/0.224, 1/0.225 ]),
-                                    transforms.Normalize(mean = [ -0.485, -0.456, -0.406 ],
-                                                        std = [ 1., 1., 1. ]),
-                                ])
-
-        image = invTrans(image)
-        pred_text = pred[1] + pred[2] + pred[3]
-        true_text = input[1] + input[2] + input[3]
-        ax[i,0].imshow(image.permute(1,2,0))
-        ax[i,0].set_title("Input: \n" + input[1])
-        ax[i,0].axis('off')
-        ax[i,0].title.set_fontsize(ax[i,0].title.get_fontsize()-5)
-        wordcloud = WordCloud().generate(pred_text)
-        wordcloud_true = WordCloud().generate(true_text)
-        ax[i,1].imshow(wordcloud, interpolation = 'bilinear')
-        ax[i,1].set_title("Prediction: \n" + pred[1])
-        ax[i,1].axis('off')
-        ax[i,1].title.set_fontsize(ax[i,1].title.get_fontsize()-5)
+            image = invTrans(image)
+            pred_text = pred[1] + pred[2] + pred[3]
+            true_text = input[1] + input[2] + input[3]
+            ax[i,0].imshow(image.permute(1,2,0))
+            ax[i,0].set_title("Input: \n" + input[1])
+            ax[i,0].axis('off')
+            ax[i,0].title.set_fontsize(ax[i,0].title.get_fontsize()-5)
+            wordcloud = WordCloud().generate(pred_text)
+            wordcloud_true = WordCloud().generate(true_text)
+            ax[i,1].imshow(wordcloud, interpolation = 'bilinear')
+            ax[i,1].set_title("Prediction: \n" + pred[1])
+            ax[i,1].axis('off')
+            ax[i,1].title.set_fontsize(ax[i,1].title.get_fontsize()-5)
 
 
-        ax[i,2].imshow(wordcloud_true, interpolation = 'bilinear')
-        ax[i,2].set_title("True: \n" + input[1])
-        ax[i,2].axis('off')
-        ax[i,2].title.set_fontsize(ax[i,2].title.get_fontsize()-5)
+            ax[i,2].imshow(wordcloud_true, interpolation = 'bilinear')
+            ax[i,2].set_title("True: \n" + input[1])
+            ax[i,2].axis('off')
+            ax[i,2].title.set_fontsize(ax[i,2].title.get_fontsize()-5)
 
-        i += 1
-        if i >= (n_images):
-            break
-i=0
-input = VocabImage[metrics_img2text['idx'][4]]
-pred = VocabImage[metrics_img2text['idx'][4]]
+            i += 1
+            if i >= (n_images):
+                break
+    i=0
+    input = VocabImage[metrics_img2text['idx'][4]]
+    pred = VocabImage[metrics_img2text['idx'][4]]
 
-image = input[0]
-invTrans = transforms.Compose([ transforms.Normalize(mean = [ 0., 0., 0. ],
-                                                std = [ 1/0.229, 1/0.224, 1/0.225 ]),
-                            transforms.Normalize(mean = [ -0.485, -0.456, -0.406 ],
-                                                std = [ 1., 1., 1. ]),
-                        ])
+    image = input[0]
+    invTrans = transforms.Compose([ transforms.Normalize(mean = [ 0., 0., 0. ],
+                                                    std = [ 1/0.229, 1/0.224, 1/0.225 ]),
+                                transforms.Normalize(mean = [ -0.485, -0.456, -0.406 ],
+                                                    std = [ 1., 1., 1. ]),
+                            ])
 
-image = invTrans(image)
-pred_text = pred[1] + pred[2] + pred[3]
-true_text = input[1] + input[2] + input[3]
-ax[i,0].imshow(image.permute(1,2,0))
-ax[i,0].set_title("Input: \n" + input[1])
-ax[i,0].axis('off')
-ax[i,0].title.set_fontsize(ax[i,0].title.get_fontsize()-5)
-wordcloud = WordCloud().generate(pred_text)
-wordcloud_true = WordCloud().generate(true_text)
-ax[i,1].imshow(wordcloud, interpolation = 'bilinear')
-ax[i,1].set_title("Prediction: \n" + pred[1])
-ax[i,1].axis('off')
-ax[i,1].title.set_fontsize(ax[i,1].title.get_fontsize()-5)
-
-
-ax[i,2].imshow(wordcloud_true, interpolation = 'bilinear')
-ax[i,2].set_title("True: \n" + input[1])
-ax[i,2].axis('off')
-ax[i,2].title.set_fontsize(ax[i,2].title.get_fontsize()-5)
-# plt.savefig("models/sample_results_w_wordclouds_img2txt_mar1")
-plt.show()
+    image = invTrans(image)
+    pred_text = pred[1] + pred[2] + pred[3]
+    true_text = input[1] + input[2] + input[3]
+    ax[i,0].imshow(image.permute(1,2,0))
+    ax[i,0].set_title("Input: \n" + input[1])
+    ax[i,0].axis('off')
+    ax[i,0].title.set_fontsize(ax[i,0].title.get_fontsize()-5)
+    wordcloud = WordCloud().generate(pred_text)
+    wordcloud_true = WordCloud().generate(true_text)
+    ax[i,1].imshow(wordcloud, interpolation = 'bilinear')
+    ax[i,1].set_title("Prediction: \n" + pred[1])
+    ax[i,1].axis('off')
+    ax[i,1].title.set_fontsize(ax[i,1].title.get_fontsize()-5)
 
 
-fig, ax = plt.subplots(n_images,3, figsize=(10,10))
-fig.subplots_adjust(hspace=0.2, wspace=0.1)
-i=1
-for (idx, pred_idx) in zip(ids,metrics_text2img['pred_idx']):
+    ax[i,2].imshow(wordcloud_true, interpolation = 'bilinear')
+    ax[i,2].set_title("True: \n" + input[1])
+    ax[i,2].axis('off')
+    ax[i,2].title.set_fontsize(ax[i,2].title.get_fontsize()-5)
+    # plt.savefig("models/sample_results_w_wordclouds_img2txt_mar1")
+    plt.show()
 
-    if rand(1) < 0.95:
-        None
-    else:
 
-        input = VocabImage[idx]
-        pred = VocabImage[pred_idx]
+    fig, ax = plt.subplots(n_images,3, figsize=(10,10))
+    fig.subplots_adjust(hspace=0.2, wspace=0.1)
+    i=1
+    for (idx, pred_idx) in zip(ids,metrics_text2img['pred_idx']):
 
-        
-        invTrans = transforms.Compose([ transforms.Normalize(mean = [ 0., 0., 0. ],
-                                                        std = [ 1/0.229, 1/0.224, 1/0.225 ]),
-                                    transforms.Normalize(mean = [ -0.485, -0.456, -0.406 ],
-                                                        std = [ 1., 1., 1. ]),
-                                ])
-        true_image = invTrans(input[0])
-        pred_image = invTrans(pred[0])
-        
-        text = input[1] + input[2] + input[3]
-        
-        wordcloud = WordCloud().generate(text)
-        ax[i,0].imshow(wordcloud, interpolation = 'bilinear')
-        ax[i,0].set_title("Input: \n" + input[1])
-        ax[i,0].axis('off')
-        ax[i,0].title.set_fontsize(ax[i,0].title.get_fontsize()-5)
+        if rand(1) < 0.95:
+            None
+        else:
 
-        ax[i,1].imshow(pred_image.permute(1,2,0))
-        ax[i,1].set_title("Prediction: \n" + pred[1])
-        ax[i,1].axis('off')
-        ax[i,1].title.set_fontsize(ax[i,1].title.get_fontsize()-5)
+            input = VocabImage[idx]
+            pred = VocabImage[pred_idx]
 
-        ax[i,2].imshow(true_image.permute(1,2,0))
-        ax[i,2].set_title("True: \n" + input[1])
-        ax[i,2].axis('off')
-        ax[i,2].title.set_fontsize(ax[i,2].title.get_fontsize()-5)
+            
+            invTrans = transforms.Compose([ transforms.Normalize(mean = [ 0., 0., 0. ],
+                                                            std = [ 1/0.229, 1/0.224, 1/0.225 ]),
+                                        transforms.Normalize(mean = [ -0.485, -0.456, -0.406 ],
+                                                            std = [ 1., 1., 1. ]),
+                                    ])
+            true_image = invTrans(input[0])
+            pred_image = invTrans(pred[0])
+            
+            text = input[1] + input[2] + input[3]
+            
+            wordcloud = WordCloud().generate(text)
+            ax[i,0].imshow(wordcloud, interpolation = 'bilinear')
+            ax[i,0].set_title("Input: \n" + input[1])
+            ax[i,0].axis('off')
+            ax[i,0].title.set_fontsize(ax[i,0].title.get_fontsize()-5)
 
-        i += 1
-        if i >= (n_images):
-            break
+            ax[i,1].imshow(pred_image.permute(1,2,0))
+            ax[i,1].set_title("Prediction: \n" + pred[1])
+            ax[i,1].axis('off')
+            ax[i,1].title.set_fontsize(ax[i,1].title.get_fontsize()-5)
 
-input = VocabImage[metrics_text2img['idx'][0]]
-pred = VocabImage[metrics_text2img['idx'][0]]
-i=0
+            ax[i,2].imshow(true_image.permute(1,2,0))
+            ax[i,2].set_title("True: \n" + input[1])
+            ax[i,2].axis('off')
+            ax[i,2].title.set_fontsize(ax[i,2].title.get_fontsize()-5)
 
-invTrans = transforms.Compose([ transforms.Normalize(mean = [ 0., 0., 0. ],
-                                                std = [ 1/0.229, 1/0.224, 1/0.225 ]),
-                            transforms.Normalize(mean = [ -0.485, -0.456, -0.406 ],
-                                                std = [ 1., 1., 1. ]),
-                        ])
-true_image = invTrans(input[0])
-pred_image = invTrans(pred[0])
+            i += 1
+            if i >= (n_images):
+                break
 
-text = input[1] + input[2] + input[3]
+    input = VocabImage[metrics_text2img['idx'][0]]
+    pred = VocabImage[metrics_text2img['idx'][0]]
+    i=0
 
-wordcloud = WordCloud().generate(text)
-ax[i,0].imshow(wordcloud, interpolation = 'bilinear')
-ax[i,0].set_title("Input: \n" + input[1])
-ax[i,0].axis('off')
-ax[i,0].title.set_fontsize(ax[i,0].title.get_fontsize()-5)
+    invTrans = transforms.Compose([ transforms.Normalize(mean = [ 0., 0., 0. ],
+                                                    std = [ 1/0.229, 1/0.224, 1/0.225 ]),
+                                transforms.Normalize(mean = [ -0.485, -0.456, -0.406 ],
+                                                    std = [ 1., 1., 1. ]),
+                            ])
+    true_image = invTrans(input[0])
+    pred_image = invTrans(pred[0])
 
-ax[i,1].imshow(pred_image.permute(1,2,0))
-ax[i,1].set_title("Prediction: \n" + pred[1])
-ax[i,1].axis('off')
-ax[i,1].title.set_fontsize(ax[i,1].title.get_fontsize()-5)
+    text = input[1] + input[2] + input[3]
 
-ax[i,2].imshow(true_image.permute(1,2,0))
-ax[i,2].set_title("True: \n" + input[1])
-ax[i,2].axis('off')
-ax[i,2].title.set_fontsize(ax[i,2].title.get_fontsize()-5)
-# plt.savefig("models/sample_results_w_wordclouds_txt2img_mar1")
-plt.show()
+    wordcloud = WordCloud().generate(text)
+    ax[i,0].imshow(wordcloud, interpolation = 'bilinear')
+    ax[i,0].set_title("Input: \n" + input[1])
+    ax[i,0].axis('off')
+    ax[i,0].title.set_fontsize(ax[i,0].title.get_fontsize()-5)
+
+    ax[i,1].imshow(pred_image.permute(1,2,0))
+    ax[i,1].set_title("Prediction: \n" + pred[1])
+    ax[i,1].axis('off')
+    ax[i,1].title.set_fontsize(ax[i,1].title.get_fontsize()-5)
+
+    ax[i,2].imshow(true_image.permute(1,2,0))
+    ax[i,2].set_title("True: \n" + input[1])
+    ax[i,2].axis('off')
+    ax[i,2].title.set_fontsize(ax[i,2].title.get_fontsize()-5)
+    # plt.savefig("models/sample_results_w_wordclouds_txt2img_mar1")
+    plt.show()
+
+def plot_topfive_img2text(metrics_img2text, VocabImage, ids):
+
+    n_examples = 0
+
+    for i, (idx, pred_idx) in enumerate(zip(ids,metrics_img2text['pred_idx'])):
+
+        if idx == pred_idx:
+            n_examples += 1
+            fig, ax = plt.subplots(1,6, figsize=(10,5))
+            fig.subplots_adjust(hspace=0.2, wspace=0.1)
+            
+            ax = ax.ravel()
+            print(idx)
+
+            input = VocabImage[idx]
+            pred = VocabImage[pred_idx]
+
+            image = input[0]
+            invTrans = transforms.Compose([ transforms.Normalize(mean = [ 0., 0., 0. ],
+                                                            std = [ 1/0.229, 1/0.224, 1/0.225 ]),
+                                        transforms.Normalize(mean = [ -0.485, -0.456, -0.406 ],
+                                                            std = [ 1., 1., 1. ]),
+                                    ])
+
+            image = invTrans(image)
+
+            ax[0].imshow(image.permute(1,2,0))
+            ax[0].set_title("Input: \n" + input[1])
+            ax[0].axis('off')
+            ax[0].title.set_fontsize(ax[0].title.get_fontsize()-5)
+
+            top5_preds = metrics_img2text['top5_pred_idx'][i]
+            for j in range(len(top5_preds)):
+                pred = VocabImage[top5_preds[j]]
+                pred_text = pred[1] + pred[2] + pred[3]
+                wordcloud = WordCloud().generate(pred_text)
+                ax[j+1].imshow(wordcloud, interpolation = 'bilinear')
+                ax[j+1].set_title(f"Prediction {j+1}: \n" + pred[1])
+                ax[j+1].axis('off')
+                ax[j+1].title.set_fontsize(ax[j+1].title.get_fontsize()-5)
+            plt.tight_layout()
+            plt.show()
+
+            if n_examples >= 5:
+                break
+
+def plot_topfive_text2img(metrics_text2img, VocabImage, ids):
+
+    n_examples = 0
+
+    for i, (idx, pred_idx) in enumerate(zip(ids,metrics_text2img['pred_idx'])):
+
+        if idx == pred_idx:
+
+            n_examples += 1
+
+            fig, ax = plt.subplots(1,6, figsize=(10,5))
+            fig.subplots_adjust(hspace=0.2, wspace=0.1)
+            
+            ax = ax.ravel()
+            print(idx)
+
+            input = VocabImage[idx]
+            
+            invTrans = transforms.Compose([ transforms.Normalize(mean = [ 0., 0., 0. ],
+                                                            std = [ 1/0.229, 1/0.224, 1/0.225 ]),
+                                        transforms.Normalize(mean = [ -0.485, -0.456, -0.406 ],
+                                                            std = [ 1., 1., 1. ]),
+                                    ])
+            true_image = invTrans(input[0])
+            text = input[1] + input[2] + input[3]
+            
+            wordcloud = WordCloud().generate(text)
+            ax[0].imshow(wordcloud, interpolation = 'bilinear')
+            ax[0].set_title("Input: \n" + input[1])
+            ax[0].axis('off')
+            ax[0].title.set_fontsize(ax[0].title.get_fontsize()-5)
+
+            for j in range(5):
+                pred = VocabImage[metrics_text2img['top5_pred_idx'][i][j]]
+                pred_image = invTrans(pred[0])
+                ax[j+1].imshow(pred_image.permute(1,2,0))
+                ax[j+1].set_title(f"Prediction {j+1}: \n" + pred[1])
+                ax[j+1].axis('off')
+                ax[j+1].title.set_fontsize(ax[j+1].title.get_fontsize()-5)
+            plt.tight_layout()
+            plt.show()
+
+            if n_examples >= 5:
+                break
+
+
+
+
+
+if __name__ == '__main__':
+
+    _, _, _, _, _, test_data, VocabImage = prepare_dataloaders(batch_size=1, pretrained=True, image_size=(224,224))
+
+    img_features, ids = pickle.load(open(f"models/features/test_img_features_lr3.pkl", 'rb'))
+    text_features, ids = pickle.load(open(f"models/features/test_text_features_lr3.pkl", 'rb'))
+
+    metrics_img2text = compute_metrics(img_features, text_features, ids, metric='cosine', recall_klist=(1, 5, 10), return_raw=False, return_idx=True)
+    metrics_text2img = compute_metrics(text_features, img_features, ids, metric='cosine', recall_klist=(1, 5, 10), return_raw=False, return_idx=True)
+
+    # plot_examples(metrics_img2text, metrics_text2img, VocabImage, ids)
+    plot_topfive_img2text(metrics_img2text, VocabImage, ids)
+    plot_topfive_text2img(metrics_text2img, VocabImage, ids)
 
