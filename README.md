@@ -2,7 +2,7 @@
 Repository for image-to-recipe retrieval project for the DTU Course Advanced Deep Learning in Computer Vision (02501). You can find our poster [here](poster/poster_ADLCV.pdf)!
 
 # Background
-The goal of image-to-recipe retrieval is to retrieve a recipe (given a list of known recipes) given an image query through **self-supervised learning**. This is achieved by projecting the image and text recipes to high-dimensional embedding (vector) space using Transformers. For any given image, the "correct" recipe can be retrieved by choosing the recipe vector with the lowest distance to the image vector. 
+The goal of image-to-recipe retrieval is to retrieve a recipe (given a list of known recipes) given an image query through **self-supervised learning**. This is achieved by projecting the image and text recipes to high-dimensional embedding (vector) space using Transformer models. For any given image, the "correct" recipe can be retrieved by choosing the recipe vector with the lowest distance to the image vector. 
 
 The image and text Transformers are trained simultaniously using the [Triplet loss](https://en.wikipedia.org/wiki/Triplet_loss) to embed images and texts into the same latent embedding space. The model is trained in a **self-supervised** manner, meaning no labels are given to the model. Instead, the model learns implicit labels via the Triplet loss function.
 
