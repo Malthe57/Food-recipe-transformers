@@ -15,3 +15,10 @@ pip install -r requirements.txt
 ```
 python src/models/train_model.py --image_size 224 --model_name "models/best_model_ever_1.pt" --mode 1 --pretrained
 ```
+
+# Results
+Image-to-text retrieval
+![alt text](reports/figures/img2text.gif)
+
+Text-to-image retrieval
+![alt text](reports/figures/text2img.gif)

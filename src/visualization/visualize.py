@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+from matplotlib.animation import ArtistAnimation
 import pickle
 import sys
 import os
@@ -12,6 +13,10 @@ from torchtext.data.utils import get_tokenizer
 import torchvision.transforms as transforms
 from torch.utils.data import DataLoader, random_split
 from numpy.random import rand
+from PIL import Image
+import matplotlib.image as mpimg
+import numpy as np
+import glob
 
 
 def prepare_dataloaders(batch_size, pretrained=False, image_size=(64,64)):
@@ -235,11 +240,13 @@ def plot_topfive_img2text(metrics_img2text, VocabImage, ids):
             ax[0].axis('off')
             ax[0].title.set_fontsize(ax[0].title.get_fontsize()-5)
 
+            _, w, h = image.shape
+
             top5_preds = metrics_img2text['top5_pred_idx'][i]
             for j in range(len(top5_preds)):
                 pred = VocabImage[top5_preds[j]]
                 pred_text = pred[1] + pred[2] + pred[3]
-                wordcloud = WordCloud().generate(pred_text)
+                wordcloud = WordCloud(width=w, height=h).generate(pred_text)
                 ax[j+1].imshow(wordcloud, interpolation = 'bilinear')
                 ax[j+1].set_title(f"Prediction {j+1}: \n" + pred[1])
                 ax[j+1].axis('off')
@@ -247,7 +254,7 @@ def plot_topfive_img2text(metrics_img2text, VocabImage, ids):
             plt.tight_layout()
             plt.show()
 
-            if n_examples >= 5:
+            if n_examples >= 100:
                 break
 
 def plot_topfive_text2img(metrics_text2img, VocabImage, ids):
@@ -276,7 +283,7 @@ def plot_topfive_text2img(metrics_text2img, VocabImage, ids):
             true_image = invTrans(input[0])
             text = input[1] + input[2] + input[3]
             
-            wordcloud = WordCloud().generate(text)
+            wordcloud = WordCloud(width=224, height=224).generate(text)
             ax[0].imshow(wordcloud, interpolation = 'bilinear')
             ax[0].set_title("Input: \n" + input[1])
             ax[0].axis('off')
@@ -292,11 +299,31 @@ def plot_topfive_text2img(metrics_text2img, VocabImage, ids):
             plt.tight_layout()
             plt.show()
 
-            if n_examples >= 5:
+            if n_examples >= 100:
                 break
 
+def animate(mode='img2text'):
+    if mode == 'img2text':
+        files = glob.glob('reports/figures/img2text/*.png')
+    elif mode == 'text2img':
+        files = glob.glob('reports/figures/text2img/*.png')
 
+    # Create the figure and axes objects
+    fig, ax = plt.subplots()
+    fig.set_size_inches(5.6*4,1*4)
+    ax.set_axis_off()
+    fig.subplots_adjust(left=0, bottom=0, right=1, top=1, wspace=None, hspace=None)
 
+    image_array = []  
+    for file in files:
+        image = np.array(Image.open(file))
+        img = ax.imshow(image, animated=True)
+        image_array.append([img])   
+
+    # Create the animation object
+    animation_fig = ArtistAnimation(fig, image_array, interval=1500, blit=True, repeat_delay=50)
+
+    animation_fig.save(f"reports/figures/{mode}.gif")
 
 
 if __name__ == '__main__':
@@ -310,6 +337,9 @@ if __name__ == '__main__':
     metrics_text2img = compute_metrics(text_features, img_features, ids, metric='cosine', recall_klist=(1, 5, 10), return_raw=False, return_idx=True)
 
     # plot_examples(metrics_img2text, metrics_text2img, VocabImage, ids)
-    plot_topfive_img2text(metrics_img2text, VocabImage, ids)
-    plot_topfive_text2img(metrics_text2img, VocabImage, ids)
+    # plot_topfive_img2text(metrics_img2text, VocabImage, ids)
+    # plot_topfive_text2img(metrics_text2img, VocabImage, ids)
+
+    animate('img2text')
+    animate('text2img')
 
