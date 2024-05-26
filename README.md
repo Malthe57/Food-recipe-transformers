@@ -23,10 +23,14 @@ python src/models/train_model.py --image_size 224 --model_name "models/best_mode
 The ``--mode`` flag controls the text modality. 1 is just the title, 2 is title+ingredients, and 3 is title+ingredients+instructions.
 
 
-Get results by running `
-```python src/models/predict_model.py```
+Get results by running 
+```
+python src/models/predict_model.py
+```
 Followed by
-```python src/visualization/visualize.py```
+```
+python src/visualization/visualize.py
+```
 
 # Results
 Top 5 retrievals for image-to-text retrieval task
