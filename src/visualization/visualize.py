@@ -310,7 +310,7 @@ def animate(mode='img2text'):
 
     # Create the figure and axes objects
     fig, ax = plt.subplots()
-    fig.set_size_inches(5.6*4,1*4)
+    fig.set_size_inches(5.6*10,1*10)
     ax.set_axis_off()
     fig.subplots_adjust(left=0, bottom=0, right=1, top=1, wspace=None, hspace=None)
 
@@ -321,7 +321,7 @@ def animate(mode='img2text'):
         image_array.append([img])   
 
     # Create the animation object
-    animation_fig = ArtistAnimation(fig, image_array, interval=1500, blit=True, repeat_delay=50)
+    animation_fig = ArtistAnimation(fig, image_array, interval=3000, blit=True, repeat_delay=50)
 
     animation_fig.save(f"reports/figures/{mode}.gif")
 
