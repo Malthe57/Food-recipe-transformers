@@ -7,6 +7,7 @@ The goal of image-to-recipe retrieval is to retrieve a recipe (given a list of k
 The image and text Transformers are trained simultaniously using the [Triplet loss](https://en.wikipedia.org/wiki/Triplet_loss) to embed images and texts into the same latent embedding space. The model is trained in a **self-supervised** manner, meaning no labels are given to the model. Instead, the model learns implicit labels via the Triplet loss function.
 
 ![alttext](reports/figures/architecture.png)
+
 Learning a common embedding space means we can also perform opposite task: recipe-to-image retrieval.
 
 # Getting started
