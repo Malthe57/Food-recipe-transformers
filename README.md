@@ -2,7 +2,7 @@
 Repository for the image-to-recipe retrieval project in the course Advanced Deep Learning in Computer Vision (02501) at DTU. You can find our poster [here](poster/poster_ADLCV.pdf)!
 
 # Background
-The goal of image-to-recipe retrieval is to retrieve a recipe (from a list of known recipes) given an image query through **self-supervised learning**. This is achieved by projecting the image and text recipes to a high-dimensional latent (vector) space using encoder part of Transformer models. For any given image, the "correct" recipe can be retrieved by choosing the recipe vector with the lowest distance to the image vector in this latent space. 
+The goal of image-to-recipe retrieval is to retrieve a recipe (from a list of known recipes) given an image query through **multimodal learning**. In this case, we learn multimodal representations of food through images and recipes. We achieve this by projecting the image and text recipes to a high-dimensional latent (vector) space using the encoder part of Transformer models. For any given image, the "correct" recipe can be retrieved by choosing the recipe vector with the lowest distance to the image vector in this latent space. 
 
 The image and text Transformers are trained simultaniously using the [Triplet loss](https://en.wikipedia.org/wiki/Triplet_loss) to embed images and texts into the same latent space, as visualised below. The model is **self-supervised**, as no explicit labels are given to the model. Instead, the model learns implicit labels via the Triplet loss function. 
 
