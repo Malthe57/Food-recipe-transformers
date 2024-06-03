@@ -1,4 +1,4 @@
-# Text and vision Transformers for image-to-recipe retrieval
+# Text and vision Transformers for image-to-recipe retrieval 🍕🍔🥗
 Repository for the image-to-recipe retrieval project in the course Advanced Deep Learning in Computer Vision (02501) at DTU. You can find our poster [here](poster/poster_ADLCV.pdf)!
 
 # Background
