@@ -1,4 +1,4 @@
-# Text and vision Transformers for image-to-recipe retrieval 🍕🍔🥗
+# Multi-modal learning for image-to-recipe retrieval 🍕🍔🥗
 Repository for the image-to-recipe retrieval project in the course Advanced Deep Learning in Computer Vision (02501) at DTU. You can find our poster [here](poster/poster_ADLCV.pdf)!
 
 # Background
@@ -8,7 +8,7 @@ The image and text Transformers are trained simultaniously using the [Triplet lo
 
 ![alttext](reports/figures/architecture.png)
 
-Learning a common embedding space means we can also perform opposite task: recipe-to-image retrieval.
+Learning a common embedding space means we can also perform the opposite task: recipe-to-image retrieval.
 
 # Getting started
 Create an environment with ``Python 3.10`` and install the dependencies.
